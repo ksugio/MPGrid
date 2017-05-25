@@ -24,7 +24,6 @@ clean:
 .c.o:
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
-grid.c:	MPGrid.h
-rand.c:	MPGrid.h
+grid.c:		MPGrid.h
+rand.c:		MPGrid.h
 python.c:	MPGrid.h
-
