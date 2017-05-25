@@ -38,6 +38,4 @@ EXPORTS
 	MPGL_GridDraw
 	MPGL_GridDrawAxis
 	MPGL_GridDrawFit
-	; glut
-	MPGL_GridWindow
-	MPGL_GridImage
+

@@ -26,9 +26,6 @@
     <ClCompile Include="draw.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="glut.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="model.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

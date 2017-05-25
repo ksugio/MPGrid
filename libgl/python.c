@@ -10,7 +10,7 @@ static void IdleFunc(void)
 	PyObject_CallObject(FuncObj, NULL);
 }
 
-static PyObject *PyGridWindow(PyObject *self, PyObject *args, PyObject *kwds)
+/*static PyObject *PyGridWindow(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	MP_GridData *data;
 	MPGL_GridDrawData *draw;
@@ -74,7 +74,7 @@ static PyObject *PyGridPostRedisplay(PyObject *self, PyObject *args)
 {
 	glutPostRedisplay();
 	Py_RETURN_NONE;
-}
+}*/
 
 static PyObject *PyGridTextBitmap(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -90,12 +90,6 @@ static PyObject *PyGridTextBitmap(PyObject *self, PyObject *args, PyObject *kwds
 }
 
 static PyMethodDef MPGLGridPyMethods[] = {
-	{ "window", (PyCFunction)PyGridWindow, METH_VARARGS | METH_KEYWORDS,
-	"window(grid, cmp, scene, model, kind, width, height, [range], [func]) : create window for grid data" },
-	{ "image", (PyCFunction)PyGridImage, METH_VARARGS | METH_KEYWORDS,
-	"image(grid, cmp, scene, model, kind, width, height, [range]) : create image for grid data" },
-	{ "post_redisplay", (PyCFunction)PyGridPostRedisplay, METH_NOARGS,
-	"post_redisplay() : post_redisplay" },
 	{ "text_bitmap", (PyCFunction)PyGridTextBitmap, METH_VARARGS | METH_KEYWORDS,
 	"text_bitmap(string, font_type) : draw text" },
 	{ NULL }  /* Sentinel */

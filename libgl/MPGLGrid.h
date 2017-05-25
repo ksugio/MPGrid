@@ -21,7 +21,6 @@ extern "C" {
 
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/freeglut.h>
 
 /*--------------------------------------------------
   model typedef and functions
@@ -179,16 +178,6 @@ void MPGL_GridDrawColormapRange(MPGL_GridDrawData *draw, MP_GridData *data, MPGL
 void MPGL_GridDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap);
 void MPGL_GridDrawAxis(int size[]);
 void MPGL_GridDrawFit(MPGL_GridDrawData *draw, MP_GridData *data, int width, int height, MPGL_Model *model);
-
-/*--------------------------------------------------
-  glut functions
-*/
-void MPGL_GridWindow(MP_GridData *data, MPGL_GridDrawData *draw,
-	MPGL_Colormap *colormap, MPGL_Scene *scene, MPGL_Model *model,
-	int width, int height, void(*func)(void), int argc, char **argv);
-void MPGL_GridImage(MP_GridData *data, MPGL_GridDrawData *draw,
-	MPGL_Colormap *colormap, MPGL_Scene *scene, MPGL_Model *model,
-	int width, int height, unsigned char *buffer, int argc, char **argv);
 
 #ifdef __cplusplus
 }
