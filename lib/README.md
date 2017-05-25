@@ -5,7 +5,7 @@ Set include path in [Property manager] - [Microsoft.cpp.Win32.user] - [VC++ Dire
 Example is shown as follows.
 
 `
-C:\Python27\include
-C:\Python27\Lib\site-packages\numpy\core\include
-C:\lib\zlib128-dll\include
+  C:\Python27\include
+  C:\Python27\Lib\site-packages\numpy\core\include
+  C:\lib\zlib128-dll\include
 `
