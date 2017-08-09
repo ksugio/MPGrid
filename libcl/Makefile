@@ -1,11 +1,11 @@
 CC = gcc
-CFLAGS = -O2 
-INCLUDES = -I/usr/include/python2.7
-LIBS = -lz -lpython2.7
-TARGET_D = MPGrid.dll
-TARGET_S = libMPGrid.a
+CFLAGS = -O2 -fPIC
+INCLUDES = -I/usr/include/python2.6 -I/usr/local/cuda/include -I../lib
+LIBS = -L/usr/local/cuda/lib64 -lOpenCL
+TARGET_D = MPCLGrid.so
+TARGET_S = libMPCLGrid.a
 INSTALL_DIR = ../python
-OBJS = grid.o rand.o python.o
+OBJS = grid.o python.o
 
 all:	$(TARGET_D) $(TARGET_S)
 
@@ -24,7 +24,6 @@ clean:
 .c.o:
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
-grid.c:	MPGrid.h
-rand.c:	MPGrid.h
-python.c:	MPGrid.h
+grid.c:	MPCLGrid.h
+python.c:	MPCLGrid.h
 

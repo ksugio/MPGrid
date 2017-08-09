@@ -1,0 +1,6 @@
+LIBRARY	"MPCLGrid"
+EXPORTS	
+	MPCL_GridPlatformInfo
+	MPCL_GridKernelInit
+	MPCL_GridKernelFinal
+	MPCL_GridKernelSolve

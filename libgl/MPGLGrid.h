@@ -157,6 +157,7 @@ void MPGL_SceneResize(MPGL_Scene *scene, int width, int height);
 #define MPGL_GRID_CYLINDER_LIST 108
 
 enum { MPGL_DrawMethodQuads, MPGL_DrawMethodCubes };
+enum { MPGL_DrawKindType, MPGL_DrawKindUpdate, MPGL_DrawKindVal, MPGL_DrawKindCx, MPGL_DrawKindCy, MPGL_DrawKindCz };
 
 typedef struct MPGL_GridDrawData {
 #ifndef _DEBUG

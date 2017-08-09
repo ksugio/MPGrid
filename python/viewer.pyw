@@ -294,6 +294,8 @@ class NewGridDialog(QtGui.QDialog):
     hbox2.addWidget(label2)
     self.spinntype = self.SpinBox(100)
     hbox2.addWidget(self.spinntype)
+    self.check = QtGui.QCheckBox("Local Coefficient");
+    vbox.addWidget(self.check)
     self.button = QtGui.QDialogButtonBox()
     vbox.addWidget(self.button)
     self.button.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
@@ -316,7 +318,10 @@ class NewGridDialog(QtGui.QDialog):
       ny = dlg.spinny.value()
       nz = dlg.spinnz.value()
       ntype = dlg.spinntype.value()
-      grid = MPGrid.new(nx, ny, nz, ntype)
+      if (dlg.check.isChecked()):
+        grid = MPGrid.new(nx, ny, nz, ntype, 1)
+      else:
+        grid = MPGrid.new(nx, ny, nz, ntype, 0)        
       return grid
     else:
       return None
@@ -561,7 +566,7 @@ class BoundDialog(QtGui.QDialog):
 
   def ComboBox(self, bd):
     combo = QtGui.QComboBox()
-    combo.addItem("Adiabatic")
+    combo.addItem("Insulate")
     combo.addItem("Periodic")
     combo.setCurrentIndex(bd)
     return combo
@@ -953,6 +958,7 @@ class MainWindow(QtGui.QMainWindow):
     cyl_menu.addAction('Update', self.cylDialog)
     cyl_menu.addAction('Val', self.cylDialog)
     grid_menu.addMenu(cyl_menu)
+    grid_menu.addAction('Ref Local Coef',  self.refLocalCoef)
     grid_menu.addAction('Solve', self.solveDialog)
     menubar.addMenu(grid_menu)
     ana_menu = QtGui.QMenu('Analysis', self)
@@ -1049,7 +1055,16 @@ class MainWindow(QtGui.QMainWindow):
   def colorDialog(self):
     dlg = ColorDialog(self, self.glwidget)
     dlg.exec_()
-    
+
+  def refLocalCoef(self):
+    if self.glwidget.grid:
+      ret = QtGui.QMessageBox.question(self, 'Ref Local Coef', "Reflect Local Coefficient?",\
+                                       QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.Yes)
+      if (ret == QtGui.QMessageBox.Yes):
+        self.glwidget.grid.ref_local_coef_all()
+        self.glwidget.cmpRange()
+        self.glwidget.updateGL()
+
   def solveDialog(self):
     if self.glwidget.grid:
       dlg = SolveDialog(self, self.glwidget)
@@ -1097,6 +1112,15 @@ class MainWindow(QtGui.QMainWindow):
     button6 = ToolButton('Val', self.setDrawKind)
     group2.addButton(button6)
     toolbar.addWidget(button6)
+    button7 = ToolButton('Cx', self.setDrawKind)
+    group2.addButton(button7)
+    toolbar.addWidget(button7)
+    button8 = ToolButton('Cy', self.setDrawKind)
+    group2.addButton(button8)
+    toolbar.addWidget(button8)
+    button9 = ToolButton('Cz', self.setDrawKind)
+    group2.addButton(button9)
+    toolbar.addWidget(button9)
     self.addToolBar(toolbar)
 
   def setMouseMode(self, pressed):
@@ -1116,6 +1140,16 @@ class MainWindow(QtGui.QMainWindow):
         self.glwidget.draw.kind = 1 
     elif txt == "Val":
         self.glwidget.draw.kind = 2
+        self.glwidget.cmpRange()
+    elif txt == "Cx":
+        self.glwidget.draw.kind = 3
+        self.glwidget.cmpRange()
+    elif txt == "Cy":
+        self.glwidget.draw.kind = 4
+        self.glwidget.cmpRange()
+    elif txt == "Cz":
+        self.glwidget.draw.kind = 5
+        self.glwidget.cmpRange()
     self.glwidget.updateGL()
 
   def initModel(self):

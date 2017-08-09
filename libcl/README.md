@@ -1,5 +1,5 @@
 # Compile in Windows
-Visual Studio Community and Python library are required to create MPGLGrid.dll (MPGLGrid.pyd).
+Visual Studio Community and Python library are required to create MPCLGrid.dll (MPCLGrid.pyd).
 Open MPGLGrid.sln and set include path and library path according to [Property Manager] - [Microsoft.cpp.Win32.user] - [VC++ Directory] - [Include Directory] and [Library Directory].
 Example of include path is shown.
 

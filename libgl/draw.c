@@ -7,7 +7,7 @@ void MPGL_GridDrawInit(MPGL_GridDrawData *draw)
 	static int range[] = { 0, 0, 0, 10000, 10000, 10000 };
 
 	draw->method = MPGL_DrawMethodQuads;
-	draw->kind = MP_GridKindType;
+	draw->kind = MPGL_DrawKindType;
 	for (i = 0; i < MPGL_GRID_TYPE_MAX; i++) {
 		draw->disp[i] = TRUE;
 	}
@@ -147,14 +147,68 @@ void MPGL_GridDrawList(void)
 	Cylinder(MPGL_GRID_CYLINDER_LIST, 32);
 }
 
-static void GridColor(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+/*static void GridColor(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
 {
 	int id = MP_GRID_INDEX(data, x, y, z);
 	float color[3];
 
-	if (draw->kind == MP_GridKindType) MPGL_ColormapStepColor(colormap, data->type[id], color);
-	else if (draw->kind == MP_GridKindUpdate) MPGL_ColormapStepColor(colormap, data->update[id], color);
-	else if (draw->kind == MP_GridKindVal) MPGL_ColormapGradColor(colormap, data->val[id], color);
+	if (draw->kind == MPGL_DrawKindType) MPGL_ColormapStepColor(colormap, data->type[id], color);
+	else if (draw->kind == MPGL_DrawKindUpdate) MPGL_ColormapStepColor(colormap, data->update[id], color);
+	else if (draw->kind == MPGL_DrawKindVal) MPGL_ColormapGradColor(colormap, data->val[id], color);
+	glColor3fv(color);
+}*/
+
+static void TypeColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapStepColor(colormap, data->type[id], color);
+	glColor3fv(color);
+}
+
+static void UpdateColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapStepColor(colormap, data->update[id], color);
+	glColor3fv(color);
+}
+
+static void ValColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapGradColor(colormap, data->val[id], color);
+	glColor3fv(color);
+}
+
+static void CxColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapGradColor(colormap, data->cx[id], color);
+	glColor3fv(color);
+}
+
+static void CyColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapGradColor(colormap, data->cy[id], color);
+	glColor3fv(color);
+}
+
+static void CzColor(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+	float color[3];
+
+	MPGL_ColormapGradColor(colormap, data->cz[id], color);
 	glColor3fv(color);
 }
 
@@ -175,12 +229,20 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 {
 	int x, y, z;
 	int range[6];
+	void (*color_func)(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z);
 
+	if (draw->kind == MPGL_DrawKindType) color_func = TypeColor;
+	else if (draw->kind == MPGL_DrawKindUpdate) color_func = UpdateColor;
+	else if (draw->kind == MPGL_DrawKindVal) color_func = ValColor;
+	else if (draw->kind == MPGL_DrawKindCx && data->local_coef) color_func = CxColor;
+	else if (draw->kind == MPGL_DrawKindCy && data->local_coef) color_func = CyColor;
+	else if (draw->kind == MPGL_DrawKindCz && data->local_coef) color_func = CzColor;
+	else return;
 	GridDispRange(draw, data, range);
 	x = range[0];
 	for (z = range[2];z <= range[5];z++) {
 		for (y = range[1];y <= range[4];y++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST0);
@@ -190,7 +252,7 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	y = range[1];
 	for (z = range[2];z <= range[5];z++) {
 		for (x = range[0];x <= range[3];x++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST1);
@@ -200,7 +262,7 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	z = range[2];
 	for (y = range[1];y <= range[4];y++) {
 		for (x = range[0];x <= range[3];x++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST2);
@@ -210,7 +272,7 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	x = range[3];
 	for (z = range[2];z <= range[5];z++) {
 		for (y = range[1];y <= range[4];y++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST3);
@@ -220,7 +282,7 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	y = range[4];
 	for (z = range[2];z <= range[5];z++) {
 		for (x = range[0];x <= range[3];x++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST4);
@@ -230,7 +292,7 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	z = range[5];
 	for (y = range[1];y <= range[4];y++) {
 		for (x = range[0];x <= range[3];x++) {
-			GridColor(draw, data, colormap, x, y, z);
+			(color_func)(data, colormap, x, y, z);
 			glPushMatrix();
 			glTranslatef((float)x, (float)y, (float)z);
 			glCallList(MPGL_GRID_QUADS_LIST5);
@@ -239,61 +301,86 @@ static void GridQuadsDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	}
 }
 
+static void ValMinMax(MP_GridData *data, int x, int y, int z, double *min, double *max)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+
+	if (data->val[id] < *min) *min = data->val[id];
+	if (data->val[id] > *max) *max = data->val[id];
+}
+
+static void CxMinMax(MP_GridData *data, int x, int y, int z, double *min, double *max)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+
+	if (data->cx[id] < *min) *min = data->cx[id];
+	if (data->cx[id] > *max) *max = data->cx[id];
+}
+
+static void CyMinMax(MP_GridData *data, int x, int y, int z, double *min, double *max)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+
+	if (data->cy[id] < *min) *min = data->cy[id];
+	if (data->cy[id] > *max) *max = data->cy[id];
+}
+
+static void CzMinMax(MP_GridData *data, int x, int y, int z, double *min, double *max)
+{
+	int id = MP_GRID_INDEX(data, x, y, z);
+
+	if (data->cz[id] < *min) *min = data->cz[id];
+	if (data->cz[id] > *max) *max = data->cz[id];
+}
+
 static void GridQuadsColormapRange(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap)
 {
-	int id;
 	int x, y, z;
 	int range[6];
 	double min = 1.0e32;
 	double max = -1.0e32;
+	void (*minmax_func)(MP_GridData *data, int x, int y, int z, double *min, double *max);
 
+	if (draw->kind == MPGL_DrawKindVal) minmax_func = ValMinMax;
+	else if (draw->kind == MPGL_DrawKindCx && data->local_coef) minmax_func = CxMinMax;
+	else if (draw->kind == MPGL_DrawKindCy && data->local_coef) minmax_func = CyMinMax;
+	else if (draw->kind == MPGL_DrawKindCz && data->local_coef) minmax_func = CzMinMax;
+	else return;
 	GridDispRange(draw, data, range);
 	x = range[0];
 	for (z = range[2]; z <= range[5]; z++) {
 		for (y = range[1]; y <= range[4]; y++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	y = range[1];
 	for (z = range[2]; z <= range[5]; z++) {
 		for (x = range[0]; x <= range[3]; x++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	z = range[2];
 	for (y = range[1]; y <= range[4]; y++) {
 		for (x = range[0]; x <= range[3]; x++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	x = range[3];
 	for (z = range[2]; z <= range[5]; z++) {
 		for (y = range[1]; y <= range[4]; y++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	y = range[4];
 	for (z = range[2]; z <= range[5]; z++) {
 		for (x = range[0]; x <= range[3]; x++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	z = range[5];
 	for (y = range[1]; y <= range[4]; y++) {
 		for (x = range[0]; x <= range[3]; x++) {
-			id = MP_GRID_INDEX(data, x, y, z);
-			if (data->val[id] < min) min = data->val[id];
-			if (data->val[id] > max) max = data->val[id];
+			(minmax_func)(data, x, y, z, &min, &max);
 		}
 	}
 	colormap->range[0] = min;
@@ -305,14 +392,22 @@ static void GridCubesDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Color
 	int id;
 	int x, y, z;
 	int range[6];
+	void (*color_func)(MP_GridData *data, MPGL_Colormap *colormap, int x, int y, int z);
 
+	if (draw->kind == MPGL_DrawKindType) color_func = TypeColor;
+	else if (draw->kind == MPGL_DrawKindUpdate) color_func = UpdateColor;
+	else if (draw->kind == MPGL_DrawKindVal) color_func = ValColor;
+	else if (draw->kind == MPGL_DrawKindCx && data->local_coef) color_func = CxColor;
+	else if (draw->kind == MPGL_DrawKindCy && data->local_coef) color_func = CyColor;
+	else if (draw->kind == MPGL_DrawKindCz && data->local_coef) color_func = CzColor;
+	else return;
 	GridDispRange(draw, data, range);
 	for (z = range[2]; z <= range[5]; z++) {
 		for (y = range[1]; y <= range[4]; y++) {
 			for (x = range[0]; x <= range[3]; x++) {
 				id = MP_GRID_INDEX(data, x, y, z);
 				if (draw->disp[data->type[id]]) {
-					GridColor(draw, data, colormap, x, y, z);
+					(color_func)(data, colormap, x, y, z);
 					glPushMatrix();
 					glTranslatef((float)x, (float)y, (float)z);
 					glCallList(MPGL_GRID_CUBE_LIST);
@@ -330,15 +425,20 @@ static void GridCubesColormapRange(MPGL_GridDrawData *draw, MP_GridData *data, M
 	int range[6];
 	double min = 1.0e32;
 	double max = -1.0e32;
+	void (*minmax_func)(MP_GridData *data, int x, int y, int z, double *min, double *max);
 
+	if (draw->kind == MPGL_DrawKindVal) minmax_func = ValMinMax;
+	else if (draw->kind == MPGL_DrawKindCx && data->local_coef) minmax_func = CxMinMax;
+	else if (draw->kind == MPGL_DrawKindCy && data->local_coef) minmax_func = CyMinMax;
+	else if (draw->kind == MPGL_DrawKindCz && data->local_coef) minmax_func = CzMinMax;
+	else return;
 	GridDispRange(draw, data, range);
 	for (z = range[2]; z <= range[5]; z++) {
 		for (y = range[1]; y <= range[4]; y++) {
 			for (x = range[0]; x <= range[3]; x++) {
 				id = MP_GRID_INDEX(data, x, y, z);
 				if (draw->disp[data->type[id]]) {
-					if (data->val[id] < min) min = data->val[id];
-					if (data->val[id] > max) max = data->val[id];
+					(minmax_func)(data, x, y, z, &min, &max);
 				}
 			}
 		}
@@ -371,7 +471,7 @@ void MPGL_GridDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *co
 	int i;
 	float scale[3];
 
-	if (draw->kind == MP_GridKindType) {
+	if (draw->kind == MPGL_DrawKindType) {
 		colormap->mode = MPGL_ColormapStep;
 		sprintf(colormap->title, "Type");
 		colormap->nstep = data->ntype;
@@ -379,19 +479,28 @@ void MPGL_GridDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *co
 			sprintf(colormap->label[i], "%d", i);
 		}
 	}
-	else if (draw->kind == MP_GridKindUpdate) {
+	else if (draw->kind == MPGL_DrawKindUpdate) {
 		colormap->mode = MPGL_ColormapStep;
 		sprintf(colormap->title, "Update");
 		colormap->nstep = 2;
 		sprintf(colormap->label[0], "F");
 		sprintf(colormap->label[1], "T");
 	}
-	else if (draw->kind == MP_GridKindVal) {
+	else if (draw->kind == MPGL_DrawKindVal) {
 		colormap->mode = MPGL_ColormapGrad;
 		sprintf(colormap->title, "Value");
-		if (colormap->range[0] == colormap->range[1]) {
-			MPGL_GridDrawColormapRange(draw, data, colormap);
-		}
+	}
+	else if (draw->kind == MPGL_DrawKindCx) {
+		colormap->mode = MPGL_ColormapGrad;
+		sprintf(colormap->title, "Cx");
+	}
+	else if (draw->kind == MPGL_DrawKindCy) {
+		colormap->mode = MPGL_ColormapGrad;
+		sprintf(colormap->title, "Cy");
+	}
+	else if (draw->kind == MPGL_DrawKindCz) {
+		colormap->mode = MPGL_ColormapGrad;
+		sprintf(colormap->title, "Cz");
 	}
 	ElementScale(data, scale);
 	glPushMatrix();

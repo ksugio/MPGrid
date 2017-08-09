@@ -50,8 +50,7 @@ extern "C" {
 #define MP_GRID_COEF_INDEX(d,i,j) (i+(j)*d->ntype)
 
 enum { MP_GridBoundInsulate, MP_GridBoundPeriodic };
-enum { MP_GridInterCond, MP_GridInterTrans};
-enum { MP_GridKindType, MP_GridKindUpdate, MP_GridKindVal };
+enum { MP_GridInterCond, MP_GridInterTrans };
 
 typedef struct MP_GridData {
 #ifndef _DEBUG
@@ -65,29 +64,36 @@ typedef struct MP_GridData {
 	short *update;
 	double *val;
 	double *buf;
+	double *cx, *cy, *cz;
 	int *inter_x, *inter_y, *inter_z;
 	double *coef_x, *coef_y, *coef_z;
 	double *rhoc;
 	int bound[6];
 	int step;
 	long rand_seed;
+	int local_coef;
 } MP_GridData;
 
-int MP_GridAlloc(MP_GridData *data, int nx, int ny, int nz, int ntype);
+int MP_GridAlloc(MP_GridData *data, int nx, int ny, int nz, int ntype, int local_coef);
 void MP_GridFree(MP_GridData *data);
 double MP_GridSolve(MP_GridData *data, double dt, int nloop);
 double MP_GridEstimateDt(MP_GridData *data, double ratio);
-void MP_GridSetInter1(MP_GridData *data, int inter, int i, int j);
-void MP_GridSetInter3(MP_GridData *data, int inter[], int i, int j);
-void MP_GridSetCoef1(MP_GridData *data, double coef, int i, int j);
-void MP_GridSetCoef3(MP_GridData *data, double coef[], int i, int j);
-void MP_GridSetInterCoef1(MP_GridData *data, int inter, double coef, int i, int j);
-void MP_GridSetInterCoef3(MP_GridData *data, int inter[], double coef[], int i, int j);
+int MP_GridSetInter1(MP_GridData *data, int inter, int i, int j);
+int MP_GridSetInter3(MP_GridData *data, int inter[], int i, int j);
+int MP_GridSetCoef1(MP_GridData *data, double coef, int i, int j);
+int MP_GridSetCoef3(MP_GridData *data, double coef[], int i, int j);
+int MP_GridSetInterCoef1(MP_GridData *data, int inter, double coef, int i, int j);
+int MP_GridSetInterCoef3(MP_GridData *data, int inter[], double coef[], int i, int j);
+void MP_GridRefLocalCoef(MP_GridData *data);
+void MP_GridSetLocalCoef1(MP_GridData *data, double lcoef, short type0, short type1);
+void MP_GridSetLocalCoef3(MP_GridData *data, double lcoef[], short type0, short type1);
 int MP_GridFillType(MP_GridData *data, short type,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridFillUpdate(MP_GridData *data, short update,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridFillVal(MP_GridData *data, double val,
+	int x0, int y0, int z0, int x1, int y1, int z1);
+int MP_GridFillLocalCoef(MP_GridData *data, double cx, double cy, double cz,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridEllipsoidType(MP_GridData *data, short type,
 	int x0, int y0, int z0, int x1, int y1, int z1, double margin);

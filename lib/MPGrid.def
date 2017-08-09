@@ -10,9 +10,13 @@ EXPORTS
 	MP_GridSetCoef3
 	MP_GridSetInterCoef1
 	MP_GridSetInterCoef3
+	MP_GridRefLocalCoef
+	MP_GridSetLocalCoef1
+	MP_GridSetLocalCoef3
 	MP_GridFillType
 	MP_GridFillUpdate
 	MP_GridFillVal
+	MP_GridFillLocalCoef
 	MP_GridEllipsoidType
 	MP_GridEllipsoidUpdate
 	MP_GridEllipsoidVal

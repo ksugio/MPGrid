@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -O2 
-INCLUDES = -I/usr/include/python2.7 -I../lib -I/usr/lib/python2.7/site-packages/numpy/core/include
-LIBS = -lGL -lGLU -lglut -lpython2.7
-TARGET_D = MPGLGrid.dll
+CFLAGS = -O2 -fPIC
+INCLUDES = -I/usr/include/python2.6 -I../lib
+LIBS = -lGL -lGLU -lglut
+TARGET_D = MPGLGrid.so
 TARGET_S = libMPGLGrid.a
 INSTALL_DIR = ../python
 OBJS = colormap.o draw.o glut.o model.o python.o scene.o text.o

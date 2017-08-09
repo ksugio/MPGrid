@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -O2 
-INCLUDES = -I/usr/include/python2.7
-LIBS = -lz -lpython2.7
-TARGET_D = MPGrid.dll
+CFLAGS = -O2 -fPIC
+INCLUDES = -I/usr/include/python2.6
+LIBS = -lz
+TARGET_D = MPGrid.so
 TARGET_S = libMPGrid.a
 INSTALL_DIR = ../python
 OBJS = grid.o rand.o python.o
@@ -24,6 +24,7 @@ clean:
 .c.o:
 		$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
-grid.c:		MPGrid.h
-rand.c:		MPGrid.h
+grid.c:	MPGrid.h
+rand.c:	MPGrid.h
 python.c:	MPGrid.h
+

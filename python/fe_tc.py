@@ -16,7 +16,7 @@ if __name__ == "__main__":
     elm = 1.0e-6
     findv = 1.0e-13
     lam_fe = 67
-    g = MPGrid.new(nx, ny, nz, 1)
+    g = MPGrid.new(nx, ny, nz, 1, MPGrid.False)
     g.element = (elm, elm, elm)
     g.bound = (0, 0, 0, 0, 0, 0)
     g.set_rhoc(7.87*460, 0) # Fe

@@ -18,7 +18,7 @@ if __name__ == "__main__":
     lam_al = 236
     lam_sic = 270
     h_al_sic = 2.227e8
-    g = MPGrid.new(nx, ny, nz, 2)
+    g = MPGrid.new(nx, ny, nz, 2, MPGrid.False)
     g.element = (elm, elm, elm)
     g.bound = (0, 0, 0, 0, 0, 0)
     g.set_rhoc(2.7*900, 0) # Al

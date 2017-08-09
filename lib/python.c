@@ -11,15 +11,16 @@ static void PyGridDealloc(MP_GridData* self)
 static PyObject *PyGridNewNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	int nx, ny, nz, ntype;
-	static char *kwlist[] = { "nx", "ny", "nz", "ntype", NULL };
+	int local_coef = FALSE;
+	static char *kwlist[] = { "nx", "ny", "nz", "ntype", "local_coef", NULL };
 	MP_GridData *self;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "iiii", kwlist, &nx, &ny, &nz, &ntype)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "iiii|i", kwlist, &nx, &ny, &nz, &ntype, &local_coef)) {
 		return NULL;
 	}
 	self = (MP_GridData *)type->tp_alloc(type, 0);
 	if (self != NULL) {
-		if (!MP_GridAlloc(self, nx, ny, nz, ntype)) {
+		if (!MP_GridAlloc(self, nx, ny, nz, ntype, local_coef)) {
 			Py_DECREF(self);
 			return NULL;
 		}
@@ -30,7 +31,7 @@ static PyObject *PyGridNewNew(PyTypeObject *type, PyObject *args, PyObject *kwds
 static PyObject *PyGridReadNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	char *fname;
-	int version = 1;
+	int version = 2;
 	static char *kwlist[] = { "fname", "version", NULL };
 	MP_GridData *self;
 
@@ -88,10 +89,11 @@ static PyObject *PyGridCloneNew(PyTypeObject *type, PyObject *args, PyObject *kw
 }
 
 static PyMemberDef PyGridMembers[] = {
-	{ "ntot", T_INT, offsetof(MP_GridData, ntot), 1, "total number of allocated memory" },
+	{ "ntot", T_INT, offsetof(MP_GridData, ntot), 1, "total number of allocated elements" },
 	{ "ntype", T_INT, offsetof(MP_GridData, ntype), 1, "number of type" },
 	{ "step", T_INT, offsetof(MP_GridData, step), 1, "step" },
 	{ "rand_seed", T_LONG, offsetof(MP_GridData, rand_seed), 0, "seed of random number" },
+	{ "local_coef", T_INT, offsetof(MP_GridData, local_coef), 1, "flag of local coefficient mode" },
 	{ NULL }  /* Sentinel */
 };
 
@@ -367,6 +369,62 @@ static PyObject *PyGridCylinderVal(MP_GridData *self, PyObject *args, PyObject *
 	return Py_BuildValue("i", count);
 }
 
+static PyObject *PyGridGetLocalCoef(MP_GridData *self, PyObject *args, PyObject *kwds)
+{
+	int x, y, z, id;
+	static char *kwlist[] = { "pos", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(iii)", kwlist, &x, &y, &z)) {
+		return NULL;
+	}
+	id = MP_GRID_INDEX(self, x, y, z);
+	if (id >= 0 && id < self->ntot) {
+		return Py_BuildValue("(ddd)", self->cx[id], self->cy[id], self->cz[id]);
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "invalid pos");
+		return NULL;
+	}
+}
+
+static PyObject *PyGridSetLocalCoef(MP_GridData *self, PyObject *args, PyObject *kwds)
+{
+	double cx, cy, cz;
+	int x, y, z, id;
+	static char *kwlist[] = { "lcoef", "pos", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ddd)(iii)", kwlist,
+		&cx, &cy, &cz, &x, &y, &z)) {
+		return NULL;
+	}
+	id = MP_GRID_INDEX(self, x, y, z);
+	if (id >= 0 && id < self->ntot) {
+		self->cx[id] = cx;
+		self->cy[id] = cy;
+		self->cz[id] = cz;
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "invalid pos");
+		return NULL;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyGridFillLocalCoef(MP_GridData *self, PyObject *args, PyObject *kwds)
+{
+	double cx, cy, cz;
+	int x0, y0, z0, x1, y1, z1;
+	static char *kwlist[] = { "lcoef", "pos0", "pos1", NULL };
+	int count;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ddd)(iii)(iii)", kwlist,
+		&cx, &cy, &cz, &x0, &y0, &z0, &x1, &y1, &z1)) {
+		return NULL;
+	}
+	count = MP_GridFillLocalCoef(self, cx, cy, cz, x0, y0, z0, x1, y1, z1);
+	return Py_BuildValue("i", count);
+}
+
 static PyObject *PyGridGetInter(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	int i, j, id;
@@ -388,19 +446,13 @@ static PyObject *PyGridGetInter(MP_GridData *self, PyObject *args, PyObject *kwd
 static PyObject *PyGridSetInter1(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	int inter;
-	int i, j, id;
+	int i, j;
 	static char *kwlist[] = { "inter", "i", "j", NULL };
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "iii", kwlist, &inter, &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->inter_x[id] = inter;
-		self->inter_y[id] = inter;
-		self->inter_z[id] = inter;
-	}
-	else {
+	if (MP_GridSetInter1(self, inter, i, j) < 0) {
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
@@ -409,20 +461,14 @@ static PyObject *PyGridSetInter1(MP_GridData *self, PyObject *args, PyObject *kw
 
 static PyObject *PyGridSetInter3(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
-	int inter_x, inter_y, inter_z;
-	int i, j, id;
+	int inter[3];
+	int i, j;
 	static char *kwlist[] = { "inter", "i", "j", NULL };
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(iii)ii", kwlist, &inter_x, &inter_y, &inter_z, &i, &j)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(iii)ii", kwlist, &(inter[0]), &(inter[1]), &(inter[2]), &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->inter_x[id] = inter_x;
-		self->inter_y[id] = inter_y;
-		self->inter_z[id] = inter_z;
-	}
-	else {
+	if (MP_GridSetInter3(self, inter, i, j) < 0){
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
@@ -450,19 +496,13 @@ static PyObject *PyGridGetCoef(MP_GridData *self, PyObject *args, PyObject *kwds
 static PyObject *PyGridSetCoef1(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	double coef;
-	int i, j, id;
+	int i, j;
 	static char *kwlist[] = { "coef", "i", "j", NULL };
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "dii", kwlist, &coef, &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->coef_x[id] = coef;
-		self->coef_y[id] = coef;
-		self->coef_z[id] = coef;
-	}
-	else {
+	if (MP_GridSetCoef1(self, coef, i, j) < 0) {
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
@@ -471,20 +511,14 @@ static PyObject *PyGridSetCoef1(MP_GridData *self, PyObject *args, PyObject *kwd
 
 static PyObject *PyGridSetCoef3(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
-	double coef_x, coef_y, coef_z;
-	int i, j, id;
+	double coef[3];
+	int i, j;
 	static char *kwlist[] = { "coef", "i", "j", NULL };
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ddd)ii", kwlist, &coef_x, &coef_y, &coef_z, &i, &j)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ddd)ii", kwlist, &(coef[0]), &(coef[1]), &(coef[2]), &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->coef_x[id] = coef_x;
-		self->coef_y[id] = coef_y;
-		self->coef_z[id] = coef_z;
-	}
-	else {
+	if (MP_GridSetCoef3(self, coef, i, j) < 0) {
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
@@ -514,22 +548,13 @@ static PyObject *PyGridSetInterCoef1(MP_GridData *self, PyObject *args, PyObject
 {
 	int inter;
 	double coef;
-	int i, j, id;
+	int i, j;
 	static char *kwlist[] = { "inter", "coef", "i", "j", NULL };
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "idii", kwlist, &inter, &coef, &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->inter_x[id] = inter;
-		self->inter_y[id] = inter;
-		self->inter_z[id] = inter;
-		self->coef_x[id] = coef;
-		self->coef_y[id] = coef;
-		self->coef_z[id] = coef;
-	}
-	else {
+	if (MP_GridSetInterCoef1(self, inter, coef, i, j) < 0) {
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
@@ -538,28 +563,52 @@ static PyObject *PyGridSetInterCoef1(MP_GridData *self, PyObject *args, PyObject
 
 static PyObject *PyGridSetInterCoef3(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
-	int inter_x, inter_y, inter_z;
-	double coef_x, coef_y, coef_z;
-	int i, j, id;
+	int inter[3];
+	double coef[3];
+	int i, j;
 	static char *kwlist[] = { "inter", "coef", "i", "j", NULL };
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(iii)(ddd)ii", kwlist,
-		&inter_x, &inter_y, &inter_z, &coef_x, &coef_y, &coef_z, &i, &j)) {
+		&(inter[0]), &(inter[1]), &(inter[2]), &(coef[0]), &(coef[1]), &(coef[2]), &i, &j)) {
 		return NULL;
 	}
-	id = MP_GRID_COEF_INDEX(self, i, j);
-	if (id >= 0 && id < self->ntype*self->ntype) {
-		self->inter_x[id] = inter_x;
-		self->inter_y[id] = inter_y;
-		self->inter_z[id] = inter_z;
-		self->coef_x[id] = coef_x;
-		self->coef_y[id] = coef_y;
-		self->coef_z[id] = coef_z;
-	}
-	else {
+	if (MP_GridSetInterCoef3(self, inter, coef, i, j) < 0) {
 		PyErr_SetString(PyExc_ValueError, "invalid i, j");
 		return NULL;
 	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyGridRefLocalCoef(MP_GridData *self, PyObject *args)
+{
+	MP_GridRefLocalCoef(self);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyGridSetLocalCoef1(MP_GridData *self, PyObject *args, PyObject *kwds)
+{
+	double lcoef;
+	short type0, type1;
+	static char *kwlist[] = { "lcoef", "type0", "type1", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "dhh", kwlist, &lcoef, &type0, &type1)) {
+		return NULL;
+	}
+	MP_GridSetLocalCoef1(self, lcoef, type0, type1);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyGridSetLocalCoef3(MP_GridData *self, PyObject *args, PyObject *kwds)
+{
+	double lcoef[3];
+	short type0, type1;
+	static char *kwlist[] = { "lcoef", "type0", "type1", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ddd)hh", kwlist,
+		&(lcoef[0]), &(lcoef[1]), &(lcoef[2]), &type0, &type1)) {
+		return NULL;
+	}
+	MP_GridSetLocalCoef3(self, lcoef, type0, type1);
 	Py_RETURN_NONE;
 }
 
@@ -703,6 +752,12 @@ static PyMethodDef PyGridMethods[] = {
 	"ellipsoid_val(val, (x0, y0, z0), (x1, y1, z1), [margin=0.33]) : fill value in ellipsoid shape" },
 	{ "cylinder_val", (PyCFunction)PyGridCylinderVal, METH_VARARGS | METH_KEYWORDS,
 	"cylinder_val(val, (x0, y0, z0), (x1, y1, z1), dir, [margin=0.33]) : fill value in cylinder shape" },
+	{ "get_local_coef", (PyCFunction)PyGridGetLocalCoef, METH_VARARGS | METH_KEYWORDS,
+	"get_local_coef((x, y, z)) : get local coefficient" },
+	{ "set_local_coef", (PyCFunction)PyGridSetLocalCoef, METH_VARARGS | METH_KEYWORDS,
+	"set_local_coef((cx, cy, cz), (x, y, z)) : set local coefficient" },
+	{ "fill_local_coef", (PyCFunction)PyGridFillLocalCoef, METH_VARARGS | METH_KEYWORDS,
+	"fill_local_coef((cx, cy, cz), (x0, y0, z0), (x1, y1, z1)) : fill value" },
 	{ "get_inter", (PyCFunction)PyGridGetInter, METH_VARARGS | METH_KEYWORDS,
 	"get_inter(i, j) : get interface type" },
 	{ "set_inter1", (PyCFunction)PyGridSetInter1, METH_VARARGS | METH_KEYWORDS,
@@ -721,6 +776,12 @@ static PyMethodDef PyGridMethods[] = {
 	"set_inter_coef1(inter, coef, i, j) : set interface type and coefficient" },
 	{ "set_inter_coef3", (PyCFunction)PyGridSetInterCoef3, METH_VARARGS | METH_KEYWORDS,
 	"set_inter_coef3((inter_x, inter_y, inter_z), (coef_x, coef_y, coef_z), i, j) : set interface type and coefficient" },
+	{ "ref_local_coef", (PyCFunction)PyGridRefLocalCoef, METH_NOARGS,
+	"ref_local_coef() : reflect local coefficient with coefficient table" },
+	{ "set_local_coef1", (PyCFunction)PyGridSetLocalCoef1, METH_VARARGS | METH_KEYWORDS,
+	"set_local_coef1(c, type0, type1) : set local coefficient by type" },
+	{ "set_local_coef3", (PyCFunction)PyGridSetLocalCoef3, METH_VARARGS | METH_KEYWORDS,
+	"set_local_coef3((cx, cy, cz), type0, type1) : set local coefficient by type" },
 	{ "get_rhoc", (PyCFunction)PyGridGetRhoc, METH_VARARGS | METH_KEYWORDS,
 	"get_rhoc(i) : get coefficient, rhoc x c" },
 	{ "set_rhoc", (PyCFunction)PyGridSetRhoc, METH_VARARGS | METH_KEYWORDS,
@@ -812,7 +873,7 @@ static PyTypeObject PyGridNewType = {
 	0,							/*tp_setattro*/
 	0,							/*tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/*tp_flags*/
-	"new(nx, ny, nz, ntype)",	/* tp_doc */
+	"new(nx, ny, nz, ntype, [local_coef=FALSE])",	/* tp_doc */
 	0,							/* tp_traverse */
 	0,							/* tp_clear */
 	0,							/* tp_richcompare */
@@ -854,7 +915,7 @@ static PyTypeObject PyGridReadType = {
 	0,							/*tp_setattro*/
 	0,							/*tp_as_buffer*/
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/*tp_flags*/
-	"read(fname, [version=1])",	/* tp_doc */
+	"read(fname, [version=2])",	/* tp_doc */
 	0,							/* tp_traverse */
 	0,							/* tp_clear */
 	0,							/* tp_richcompare */
@@ -983,6 +1044,12 @@ PyMODINIT_FUNC initMPGrid(void)
 	PyModule_AddObject(m, "copy", (PyObject *)&PyGridCopyType);
 	Py_INCREF(&PyGridCloneType);
 	PyModule_AddObject(m, "clone", (PyObject *)&PyGridCloneType);
+	PyModule_AddIntConstant(m, "True", TRUE);
+	PyModule_AddIntConstant(m, "False", FALSE);
+	PyModule_AddIntConstant(m, "BoundInsulate", MP_GridBoundInsulate);
+	PyModule_AddIntConstant(m, "BoundPeriodic", MP_GridBoundPeriodic);
+	PyModule_AddIntConstant(m, "InterCond", MP_GridInterCond);
+	PyModule_AddIntConstant(m, "InterTrans", MP_GridInterTrans);
 }
 
 #endif /* _DEBUG */
