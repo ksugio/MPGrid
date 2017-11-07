@@ -1,11 +1,11 @@
 CC = gcc
 CFLAGS = -O2 -fPIC
 INCLUDES = -I/usr/include/python2.6 -I../lib
-LIBS = -lGL -lGLU -lglut
+LIBS = -lGL -lGLU
 TARGET_D = MPGLGrid.so
 TARGET_S = libMPGLGrid.a
 INSTALL_DIR = ../python
-OBJS = colormap.o draw.o glut.o model.o python.o scene.o text.o
+OBJS = colormap.o draw.o model.o python.o scene.o text.o
 
 all:	$(TARGET_D) $(TARGET_S)
 
@@ -26,7 +26,6 @@ clean:
 
 colormap.c:	MPGLGrid.h
 draw.c:	MPGLGrid.h
-glut.c:	MPGLGrid.h
 model.c:	MPGLGrid.h
 python.c:	MPGLGrid.h
 scene.c:	MPGLGrid.h
