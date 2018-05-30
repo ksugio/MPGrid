@@ -149,7 +149,13 @@ static PyObject *PyGridSetType(MP_GridData *self, PyObject *args, PyObject *kwds
 	}
 	id = MP_GRID_INDEX(self, x, y, z);
 	if (id >= 0 && id < self->ntot) {
-		self->type[id] = type;
+		if (type >= 0 && type < self->ntype) {
+			self->type[id] = type;
+		}
+		else {
+			PyErr_SetString(PyExc_ValueError, "invalid type");
+			return NULL;
+		}
 	}
 	else {
 		PyErr_SetString(PyExc_ValueError, "invalid pos");
@@ -168,8 +174,14 @@ static PyObject *PyGridFillType(MP_GridData *self, PyObject *args, PyObject *kwd
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "h(iii)(iii)", kwlist, &type, &x0, &y0, &z0, &x1, &y1, &z1)) {
 		return NULL;
 	}
-	count = MP_GridFillType(self, type, x0, y0, z0, x1, y1, z1);
-	return Py_BuildValue("i", count);
+	if (type >= 0 && type < self->ntype) {
+		count = MP_GridFillType(self, type, x0, y0, z0, x1, y1, z1);
+		return Py_BuildValue("i", count);
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "invalid type");
+		return NULL;
+	}
 }
 
 static PyObject *PyGridEllipsoidType(MP_GridData *self, PyObject *args, PyObject *kwds)
@@ -183,8 +195,14 @@ static PyObject *PyGridEllipsoidType(MP_GridData *self, PyObject *args, PyObject
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "h(iii)(iii)|d", kwlist, &type, &x0, &y0, &z0, &x1, &y1, &z1, &margin)) {
 		return NULL;
 	}
-	count = MP_GridEllipsoidType(self, type, x0, y0, z0, x1, y1, z1, margin);
-	return Py_BuildValue("i", count);
+	if (type >= 0 && type < self->ntype) {
+		count = MP_GridEllipsoidType(self, type, x0, y0, z0, x1, y1, z1, margin);
+		return Py_BuildValue("i", count);
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "invalid type");
+		return NULL;
+	}
 }
 
 static PyObject *PyGridCylinderType(MP_GridData *self, PyObject *args, PyObject *kwds)
@@ -199,8 +217,14 @@ static PyObject *PyGridCylinderType(MP_GridData *self, PyObject *args, PyObject 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "h(iii)(iii)i|d", kwlist, &type, &x0, &y0, &z0, &x1, &y1, &z1, &dir, &margin)) {
 		return NULL;
 	}
-	count = MP_GridCylinderType(self, type, x0, y0, z0, x1, y1, z1, dir, margin);
-	return Py_BuildValue("i", count);
+	if (type >= 0 && type < self->ntype) {
+		count = MP_GridCylinderType(self, type, x0, y0, z0, x1, y1, z1, dir, margin);
+		return Py_BuildValue("i", count);
+	}
+	else {
+		PyErr_SetString(PyExc_ValueError, "invalid type");
+		return NULL;
+	}
 }
 
 static PyObject *PyGridGetUpdate(MP_GridData *self, PyObject *args, PyObject *kwds)
