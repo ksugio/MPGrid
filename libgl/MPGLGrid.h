@@ -104,13 +104,6 @@ void MPGL_ColormapDraw(MPGL_Colormap *colormap);
 */
 enum { MPGL_ProjFrustum, MPGL_ProjOrtho };
 
-typedef struct MPGL_SceneAttr {
-	short disp;
-	float color[3];
-	float width;
-	int font;
-} MPGL_SceneAttr;
-
 typedef struct MPGL_SceneLight {
 	float position[4];
 	float specular[4];
@@ -178,7 +171,7 @@ void MPGL_GridDrawList(void);
 void MPGL_GridDrawColormapRange(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap);
 void MPGL_GridDraw(MPGL_GridDrawData *draw, MP_GridData *data, MPGL_Colormap *colormap);
 void MPGL_GridDrawAxis(int size[]);
-void MPGL_GridDrawFit(MPGL_GridDrawData *draw, MP_GridData *data, int width, int height, MPGL_Model *model);
+void MPGL_GridDrawRegion(MPGL_GridDrawData *draw, MP_GridData *data, float region[]);
 
 #ifdef __cplusplus
 }

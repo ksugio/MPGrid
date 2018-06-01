@@ -531,12 +531,11 @@ void MPGL_GridDrawAxis(int size[])
 	glPopMatrix();
 }
 
-void MPGL_GridDrawFit(MPGL_GridDrawData *draw, MP_GridData *data, int width, int height, MPGL_Model *model)
+void MPGL_GridDrawRegion(MPGL_GridDrawData *draw, MP_GridData *data, float region[])
 {
 	int i;
 	int range[6];
 	float scale[3];
-	float region[6];
 
 	GridDispRange(draw, data, range);
 	ElementScale(data, scale);
@@ -544,8 +543,6 @@ void MPGL_GridDrawFit(MPGL_GridDrawData *draw, MP_GridData *data, int width, int
 		region[i] = (range[i] - 0.5f) * scale[i];
 		region[i + 3] = (range[i + 3] + 0.5f) * scale[i];
 	}
-	MPGL_ModelFitCenter(model, region);
-	MPGL_ModelFitScale(model, region, (float)width/height);
 }
 
 /**********************************************************
@@ -613,19 +610,18 @@ static PyObject *PyGridDrawAxis(MPGL_GridDrawData *self, PyObject *args, PyObjec
 	Py_RETURN_NONE;
 }
 
-static PyObject *PyGridDrawFit(MPGL_GridDrawData *self, PyObject *args, PyObject *kwds)
+static PyObject *PyGridDrawRegion(MPGL_GridDrawData *self, PyObject *args, PyObject *kwds)
 {
 	MP_GridData *data;
-	int width, height;
-	MPGL_Model *model;
-	static char *kwlist[] = { "grid", "width", "height", "model", NULL };
+	static char *kwlist[] = { "grid", NULL };
+	float region[6];
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OiiO!", kwlist, &data,
-		&width, &height, &MPGL_ModelPyType, &model)) {
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &data)) {
 		return NULL;
 	}
-	MPGL_GridDrawFit(self, data, width, height, model);
-	Py_RETURN_NONE;
+	MPGL_GridDrawRegion(self, data, region);
+	return Py_BuildValue("dddddd", region[0], region[1], region[2],
+		region[3], region[4], region[5]);
 }
 
 static PyObject *PyGridDrawGetDisp(MPGL_GridDrawData *self, PyObject *args, PyObject *kwds)
@@ -672,8 +668,8 @@ static PyMethodDef PyMethods[] = {
 	"draw(grid, cmp) : draw grid data" },
 	{ "draw_axis", (PyCFunction)PyGridDrawAxis, METH_VARARGS | METH_KEYWORDS,
 	"draw_axis(grid) : draw axis" },
-	{ "fit", (PyCFunction)PyGridDrawFit, METH_VARARGS | METH_KEYWORDS,
-	"fit(grid, width, height, model) : fit model to grid data" },
+	{ "region", (PyCFunction)PyGridDrawRegion, METH_VARARGS | METH_KEYWORDS,
+	"region(grid) : return draw region" },
 	{ "get_disp", (PyCFunction)PyGridDrawGetDisp, METH_VARARGS | METH_KEYWORDS,
 	"get_disp(type) : get display flag" },
 	{ "set_disp", (PyCFunction)PyGridDrawSetDisp, METH_VARARGS | METH_KEYWORDS,

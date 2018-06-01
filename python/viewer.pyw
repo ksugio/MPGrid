@@ -30,6 +30,7 @@ class GLWidget(QtOpenGL.QGLWidget):
     self.grid = None
     self.draw = MPGLGrid.draw()
     self.scene = MPGLGrid.scene()
+    self.scene.lookat = (0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
     self.model = MPGLGrid.model()
     self.cmp = MPGLGrid.colormap()
     self.axis_disp = True
@@ -116,7 +117,10 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.lastPos = QtCore.QPoint(event.pos())
         
   def gridFit(self):
-    self.draw.fit(self.grid, self.__width, self.__height, self.model)
+    region = self.draw.region(self.grid)
+    self.model.fit_center(region)
+    aspect = float(self.__width)/float(self.__height)
+    self.model.fit_scale(region, aspect)
 
   def cmpRange(self):
     self.draw.cmp_range(self.grid, self.cmp)    

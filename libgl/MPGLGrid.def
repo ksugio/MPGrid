@@ -37,4 +37,4 @@ EXPORTS
 	MPGL_GridDrawColormapRange
 	MPGL_GridDraw
 	MPGL_GridDrawAxis
-	MPGL_GridDrawFit
+	MPGL_GridDrawRegion
