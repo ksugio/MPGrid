@@ -94,7 +94,6 @@
   <ItemGroup>
     <ClCompile Include="colormap.c" />
     <ClCompile Include="draw.c" />
-    <ClCompile Include="list.c" />
     <ClCompile Include="model.c" />
     <ClCompile Include="python.c" />
     <ClCompile Include="scene.c" />
