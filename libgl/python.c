@@ -3,13 +3,6 @@
 #include "MPGLGrid.h"
 #include <numpy/arrayobject.h>
 
-static PyObject *FuncObj;
-
-static void IdleFunc(void)
-{
-	PyObject_CallObject(FuncObj, NULL);
-}
-
 static PyObject *PyGridTextBitmap(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	const char *string;
