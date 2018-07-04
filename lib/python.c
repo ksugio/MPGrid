@@ -1,4 +1,4 @@
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 #include "MPGrid.h"
 
@@ -1076,4 +1076,4 @@ PyMODINIT_FUNC initMPGrid(void)
 	PyModule_AddIntConstant(m, "InterTrans", MP_GridInterTrans);
 }
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

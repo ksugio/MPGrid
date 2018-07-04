@@ -1,4 +1,4 @@
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 #include "MPCLGrid.h"
 
@@ -153,4 +153,4 @@ PyMODINIT_FUNC initMPCLGrid(void)
 	PyModule_AddObject(m, "new", (PyObject *)&MPCLGridNewPyType);
 }
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

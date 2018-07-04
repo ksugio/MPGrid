@@ -24,13 +24,6 @@ Edit Makefile and execute make.
 MPGrid.so is created and copied to python directory.
 
 # References
-+ CLASSES
-  + clone(grid) : clone grid
-  + copy(grid, (x0, y0, z0), (x1, y1, z1)) : copy grid
-  + new(nx, ny, nz, ntype, [local_coef=FALSE]) : create new grid
-  + read(fname, [version=2]) : read grid from file
-
-
 + DATA
   + True = 1
   + False = 0
@@ -39,7 +32,20 @@ MPGrid.so is created and copied to python directory.
   + InterCond = 0
   + InterTrans = 1
 
-
+## Class clone(...), copy(...), new(...), read(...)
++ clone(grid) : clone grid
+  + grid : grid data
++ copy(grid, (x0, y0, z0), (x1, y1, z1)) : copy grid
+  + grid : grid data
+  + x0, y0, z0 : start point of region
+  + x1, y1, z1 : end point of region
++ new(nx, ny, nz, ntype, [local_coef=FALSE]) : create new grid
+  + nx, ny, nz : number of elements in x, y, z direction
+  + ntype : number of types
+  + local_coef : local coefficient mode if true 
++ read(fname, [version=2]) : read grid from file
+  + fname : file name
+  + version : version of data format
 + CLASS METHODS
   + ave_val((x0, y0, z0), (x1, y1, z1)) : average values of region
   + count_type(type, (x0, y0, z0), (x1, y1, z1)) : count type in region
@@ -79,9 +85,7 @@ MPGrid.so is created and copied to python directory.
   + set_val(val, (x, y, z)) : set value
   + solve(dt, nloop) : solve
   + uniform_random(type, num, (x0, y0, z0), (x1, y1, z1)) : set type by uniform random
-  + write(fname, comp) : write grid
-
-
+  + write(fname, comp) : write grid data
 + CLASS DATA
   + bound = (xl, yl, zl, xu, yu , zu) : boundary condition (Updateable)
   + element = (ex, ey, ez) : size of element (Updateable)

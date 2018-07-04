@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 
+CFLAGS = -O2 -DMP_PYTHON_LIB
 INCLUDES = -I/usr/include/python2.7
 LIBS = -lz -lpython2.7
 TARGET_D = MPGrid.dll

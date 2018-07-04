@@ -14,7 +14,7 @@ extern "C" {
 #define MPCL_PLATFORM_MAX 32
 
 typedef struct MPCL_GridKernelData {
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 	PyObject_HEAD
 #endif
 	cl_context context;

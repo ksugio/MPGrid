@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 
+CFLAGS = -O2 -DMP_PYTHON_LIB
 INCLUDES = -I/usr/include/python2.7 -I../lib -I/usr/lib/python2.7/site-packages/numpy/core/include
 LIBS = -lGL -lGLU -lglut -lpython2.7
 TARGET_D = MPGLGrid.dll

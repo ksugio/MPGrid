@@ -548,7 +548,7 @@ void MPGL_GridDrawRegion(MPGL_GridDrawData *draw, MP_GridData *data, float regio
 /**********************************************************
 * for Python
 **********************************************************/
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 static void PyDealloc(MPGL_GridDrawData *self)
 {
@@ -748,4 +748,4 @@ PyTypeObject MPGL_GridDrawDataPyType = {
 	PyNew,						/* tp_new */
 };
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

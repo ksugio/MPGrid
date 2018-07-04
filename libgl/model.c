@@ -68,15 +68,66 @@ static void MatInverse(float mat[4][4], float mati[4][4])
 	}
 }
 
-void MPGL_ModelInit(MPGL_Model *model)
+void MPGL_ModelInit(MPGL_Model *model, float init_dir[], float region[])
+{
+	int i;
+
+	for (i = 0; i < 6; i++) {
+		model->init_dir[i] = init_dir[i];
+		model->region[i] = region[i];
+	}
+	MPGL_ModelReset(model);
+}
+
+void MPGL_ModelReset(MPGL_Model *model)
 {
 	model->mat[0][0] = 1.0, model->mat[0][1] = 0.0, model->mat[0][2] = 0.0, model->mat[0][3] = 0.0;
 	model->mat[1][0] = 0.0, model->mat[1][1] = 1.0, model->mat[1][2] = 0.0, model->mat[1][3] = 0.0;
 	model->mat[2][0] = 0.0, model->mat[2][1] = 0.0, model->mat[2][2] = 1.0, model->mat[2][3] = 0.0;
 	model->mat[3][0] = 0.0, model->mat[3][1] = 0.0, model->mat[3][2] = 0.0, model->mat[3][3] = 1.0;
+	MPGL_ModelSetDirection(model, model->init_dir);
 	MatInverse(model->mat, model->mat_inv);
-	model->center[0] = 0.0, model->center[1] = 0.0, model->center[2] = 0.0;
-	model->scale = 1.0;
+	model->center[0] = (model->region[0] + model->region[3]) / 2;
+	model->center[1] = (model->region[1] + model->region[4]) / 2;
+	model->center[2] = (model->region[2] + model->region[5]) / 2;
+	MPGL_ModelFit(model);
+}
+
+void MPGL_ModelFit(MPGL_Model *model)
+{
+	int i;
+	int bid[8][3] = { { 0,1,2 },{ 0,4,2 },{ 3,4,2 },{ 3,1,2 },
+	{ 3,4,5 },{ 3,1,5 },{ 0,1,5 },{ 0,4,5 } };
+	float v[3], x, y, z;
+	float sx, sy;
+	float xmax = -1.0e10;
+	float xmin = 1.0e10;
+	float ymax = -1.0e10;
+	float ymin = 1.0e10;
+
+	for (i = 0; i < 8; i++) {
+		v[0] = model->region[bid[i][0]];
+		v[1] = model->region[bid[i][1]];
+		v[2] = model->region[bid[i][2]];
+		v[0] -= model->center[0], v[1] -= model->center[1], v[2] -= model->center[2];
+		x = v[0] * model->mat[0][0] + v[1] * model->mat[1][0] + v[2] * model->mat[2][0] + model->mat[3][0];
+		y = v[0] * model->mat[0][1] + v[1] * model->mat[1][1] + v[2] * model->mat[2][1] + model->mat[3][1];
+		z = v[0] * model->mat[0][2] + v[1] * model->mat[1][2] + v[2] * model->mat[2][2] + model->mat[3][2];
+		if (x > xmax) xmax = x;
+		if (x < xmin) xmin = x;
+		if (y > ymax) ymax = y;
+		if (y < ymin) ymin = y;
+	}
+	if (fabs(xmax) > fabs(xmin)) xmax = (float)fabs(xmax);
+	else xmax = (float)fabs(xmin);
+	if (fabs(ymax) > fabs(ymin)) ymax = (float)fabs(ymax);
+	else ymax = (float)fabs(ymin);
+	if (xmax == 0.0) xmax = 1.0;
+	if (ymax == 0.0) ymax = 1.0;
+	sx = (float)2.0 / xmax * (float)0.45;
+	sy = (float)2.0 / ymax * (float)0.45;
+	if (sx < sy) model->scale = sx;
+	else model->scale = sy;
 }
 
 void MPGL_ModelZoom(MPGL_Model *model, float s)
@@ -217,7 +268,6 @@ void MPGL_ModelSetDirection(MPGL_Model *model, float dir[6])
 	
 	MatDir2Trigon(dir, trigon);
 	MatSetTrigon(model->mat, trigon);
-	MatInverse(model->mat, model->mat_inv);
 }
 
 void MPGL_ModelGetDirection(MPGL_Model *model, float dir[6])
@@ -249,7 +299,6 @@ void MPGL_ModelSetAngle(MPGL_Model *model, float angle[3])
 	trigon[4] = cos((double)angle[2]*M_PI/180.0);
 	trigon[5] = sin((double)angle[2]*M_PI/180.0);
 	MatSetTrigon(model->mat, trigon);
-	MatInverse(model->mat, model->mat_inv);
 }
 
 void MPGL_ModelGetAngle(MPGL_Model *model, float angle[3])
@@ -279,50 +328,6 @@ void MPGL_ModelGetAngle(MPGL_Model *model, float angle[3])
 	}
 }
 
-void MPGL_ModelFitCenter(MPGL_Model *model, float region[])
-{
-	model->center[0] = (region[0] + region[3]) / 2;
-	model->center[1] = (region[1] + region[4]) / 2;
-	model->center[2] = (region[2] + region[5]) / 2;
-}
-
-void MPGL_ModelFitScale(MPGL_Model *model, float region[], float aspect)
-{
-	int i;
-	int bid[8][3] = {{0,1,2}, {0,4,2}, {3,4,2}, {3,1,2},
-	{3,4,5}, {3,1,5}, {0,1,5}, {0,4,5}};
-	float v[3], x, y, z;
-	float sx, sy;
-	float xmax = -1.0e10;
-	float xmin = 1.0e10;
-	float ymax = -1.0e10;
-	float ymin = 1.0e10;
-
-	for (i = 0;i < 8;i++) {
-		v[0] = region[bid[i][0]];
-		v[1] = region[bid[i][1]];
-		v[2] = region[bid[i][2]];
-		v[0] -= model->center[0], v[1] -= model->center[1], v[2] -= model->center[2];
-		x = v[0]*model->mat[0][0] + v[1]*model->mat[1][0] + v[2]*model->mat[2][0] + model->mat[3][0];
-		y = v[0]*model->mat[0][1] + v[1]*model->mat[1][1] + v[2]*model->mat[2][1] + model->mat[3][1];
-		z = v[0]*model->mat[0][2] + v[1]*model->mat[1][2] + v[2]*model->mat[2][2] + model->mat[3][2];
-		if (x > xmax) xmax = x;
-		if (x < xmin) xmin = x;
-		if (y > ymax) ymax = y;
-		if (y < ymin) ymin = y;
-	}
-	if (fabs(xmax) > fabs(xmin)) xmax = (float)fabs(xmax);
-	else xmax = (float)fabs(xmin);
-	if (fabs(ymax) > fabs(ymin)) ymax = (float)fabs(ymax);
-	else ymax = (float)fabs(ymin);
-	if (xmax == 0.0) xmax = 1.0;
-	if (ymax == 0.0) ymax = 1.0;
-	sx = (float)2.0/xmax*(float)0.45;
-	sy = (float)2.0*aspect/ymax*(float)0.45;
-	if (sx < sy) model->scale = sx;
-	else model->scale = sy;
-}
-
 void MPGL_ModelTransform(MPGL_Model *model)
 {
 	glScalef(model->scale, model->scale, model->scale);
@@ -330,10 +335,75 @@ void MPGL_ModelTransform(MPGL_Model *model)
 	glTranslatef(-model->center[0], -model->center[1], -model->center[2]);
 }
 
+void MPGL_ModelButton(MPGL_Model *model, int x, int y, int down)
+{
+	model->button_down = down;
+	if (down) {
+		model->button_x = x;
+		model->button_y = y;
+	}
+	else {
+		MatInverse(model->mat, model->mat_inv);
+	}
+}
+
+int MPGL_ModelMotion(MPGL_Model *model, MPGL_Scene *scene, int x, int y, int ctrl)
+{
+	int w, h;
+	int dx, dy;
+	int cx, cy;
+	float ax, ay, az;
+	float mx, my, mz;
+	float s;
+
+	if (model->button_down) {
+		w = scene->width;
+		h = scene->height;
+		dx = x - model->button_x;
+		dy = y - model->button_y;
+		if (model->button_mode == MPGL_ModelModeRotate) {
+			if (ctrl) {
+				cx = w / 2, cy = h / 2;
+				if (x <= cx && y <= cy) ax = (float)M_PI * (-dx + dy) / h;
+				else if (x > cx && y <= cy) ax = (float)M_PI * (-dx - dy) / h;
+				else if (x <= cx && y > cy) ax = (float)M_PI * (dx + dy) / h;
+				else if (x > cx && y > cy) ax = (float)M_PI * (dx - dy) / h;
+				MPGL_ModelRotateX(model, -ax);
+			}
+			else {
+				az = (float)M_PI * dx / h;
+				MPGL_ModelRotateZ(model, -az);
+				ay = (float)M_PI * dy / h;
+				MPGL_ModelRotateY(model, -ay);
+			}
+		}
+		else if (model->button_mode == MPGL_ModelModeTranslate) {
+			if (ctrl) {
+				mx = 2 * (float)dy / h;
+				MPGL_ModelTranslateX(model, -mx);
+			}
+			else {
+				my = 2 * (float)dx / h;
+				MPGL_ModelTranslateY(model, my);
+				mz = 2 * (float)dy / h;
+				MPGL_ModelTranslateZ(model, -mz);
+			}
+		}
+		else if (model->button_mode == MPGL_ModelModeZoom) {
+			s = 1 - (float)dy / h;
+			MPGL_ModelZoom(model, s);
+		}
+		model->button_x = x;
+		model->button_y = y;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 /**********************************************************
 * for Python
 **********************************************************/
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 static void PyDealloc(MPGL_Model* self)
 {
@@ -342,21 +412,39 @@ static void PyDealloc(MPGL_Model* self)
 
 static PyObject *PyNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+	float init_dir[6];
+	float region[6];
+	static char *kwlist[] = { "init_dir", "region", NULL };
 	MPGL_Model *self;
 
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ffffff)(ffffff)", kwlist,
+		&(init_dir[0]), &(init_dir[1]), &(init_dir[2]), &(init_dir[3]), &(init_dir[4]), &(init_dir[5]),
+		&(region[0]), &(region[1]), &(region[2]), &(region[3]), &(region[4]), &(region[5]))) {
+		return NULL;
+	}
 	self = (MPGL_Model *)type->tp_alloc(type, 0);
-	MPGL_ModelInit(self);
+	MPGL_ModelInit(self, init_dir, region);
 	return (PyObject *)self;
 }
 
 static PyMemberDef PyMembers[] = {
-	{ "scale", T_FLOAT, offsetof(MPGL_Model, scale), 0, "scale" },
+	{ "scale", T_FLOAT, offsetof(MPGL_Model, scale), 0, "scale = scale : scale" },
+	{ "button_down", T_INT, offsetof(MPGL_Model, button_down), 1, "button_down : true while button pressed" },
+	{ "button_x", T_INT, offsetof(MPGL_Model, button_x), 1, "button_x : position x where button pressed" },
+	{ "button_y", T_INT, offsetof(MPGL_Model, button_y), 1, "button_y : position y where button pressed" },
+	{ "button_mode", T_INT, offsetof(MPGL_Model, button_mode), 0, "button_mode = {0:Rotate | 1:Translate | 2:Zoom} : mode while button motion" },
 	{ NULL }  /* Sentinel */
 };
 
-static PyObject *PyInit(MPGL_Model *self, PyObject *args)
+static PyObject *PyReset(MPGL_Model *self, PyObject *args)
 {
-	MPGL_ModelInit(self);
+	MPGL_ModelReset(self);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyFit(MPGL_Model *self, PyObject *args)
+{
+	MPGL_ModelFit(self);
 	Py_RETURN_NONE;
 }
 
@@ -491,42 +579,41 @@ static PyObject *PyGetAngle(MPGL_Model *self, PyObject *args)
 	return Py_BuildValue("ddd", angle[0], angle[1], angle[2]);
 }
 
-static PyObject *PyFitCenter(MPGL_Model *self, PyObject *args, PyObject *kwds)
-{
-	float region[6];
-	static char *kwlist[] = { "region", NULL };
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ffffff)", kwlist,
-		&(region[0]), &(region[1]), &(region[2]), &(region[3]), &(region[4]), &(region[5]))) {
-		return NULL;
-	}
-	MPGL_ModelFitCenter(self, region);
-	Py_RETURN_NONE;
-}
-
-static PyObject *PyFitScale(MPGL_Model *self, PyObject *args, PyObject *kwds)
-{
-	float region[6];
-	float aspect;
-	static char *kwlist[] = { "region", "aspect", NULL };
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "(ffffff)f", kwlist,
-		&(region[0]), &(region[1]), &(region[2]), &(region[3]), &(region[4]), &(region[5]), &aspect)) {
-		return NULL;
-	}
-	MPGL_ModelFitScale(self, region, aspect);
-	Py_RETURN_NONE;
-}
-
 static PyObject *PyTransform(MPGL_Model *self, PyObject *args)
 {
 	MPGL_ModelTransform(self);
 	Py_RETURN_NONE;
 }
 
+static PyObject *PyButton(MPGL_Model *self, PyObject *args, PyObject *kwds)
+{
+	int x, y, down;
+	static char *kwlist[] = { "x", "y", "down", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "iii", kwlist, &x, &y, &down)) {
+		return NULL;
+	}
+	MPGL_ModelButton(self, x, y, down);
+	Py_RETURN_NONE;
+}
+
+static PyObject *PyMotion(MPGL_Model *self, PyObject *args, PyObject *kwds)
+{
+	MPGL_Scene *scene;
+	int x, y, ctrl;
+	static char *kwlist[] = { "scene", "x", "y", "ctrl", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!iii", kwlist, &MPGL_ScenePyType, &scene, &x, &y, &ctrl)) {
+		return NULL;
+	}
+	return Py_BuildValue("i", MPGL_ModelMotion(self, scene, x, y, ctrl));
+}
+
 static PyMethodDef PyMethods[] = {
-	{ "init", (PyCFunction)PyInit, METH_NOARGS,
-	"init() : initialize matrix" },
+	{ "reset", (PyCFunction)PyReset, METH_NOARGS,
+	"reset() : reset model matrix" },
+	{ "fit", (PyCFunction)PyFit, METH_NOARGS,
+	"fit() : fit scale" },
 	{ "zoom", (PyCFunction)PyZoom, METH_VARARGS | METH_KEYWORDS,
 	"zoom(scale) : zoom" },
 	{ "trans_z", (PyCFunction)PyTranslateZ, METH_VARARGS | METH_KEYWORDS,
@@ -551,12 +638,12 @@ static PyMethodDef PyMethods[] = {
 	"set_angle(alpha, beta, gamma) : set angle" },
 	{ "get_angle", (PyCFunction)PyGetAngle, METH_NOARGS,
 	"get_angle() : get angle" },
-	{ "fit_center", (PyCFunction)PyFitCenter, METH_VARARGS | METH_KEYWORDS,
-	"fit_center(region) : fit center" },
-	{ "fit_scale", (PyCFunction)PyFitScale, METH_VARARGS | METH_KEYWORDS,
-	"fit_scale(region, aspect) : fit scale" },
 	{ "transform", (PyCFunction)PyTransform, METH_NOARGS,
 	"transform() : OpenGL transformation" },
+	{ "button", (PyCFunction)PyButton, METH_VARARGS | METH_KEYWORDS,
+	"button(x, y, down) : process when mouse button pressed" },
+	{ "motion", (PyCFunction)PyMotion, METH_VARARGS | METH_KEYWORDS,
+	"motion(scene, x, y, ctrl) : process when mouse moved, return true if model modified" },
 	{ NULL }  /* Sentinel */
 };
 
@@ -635,9 +722,9 @@ static int PySetMatInv(MPGL_Model *self, PyObject *value, void *closure)
 }
 
 static PyGetSetDef PyGetSet[] = {
-	{ "mat", (getter)PyGetMat, (setter)PySetMat, "mat = ((m00, m01, m02, m03), (...), (...), (...))", NULL },
-	{ "center", (getter)PyGetCenter, (setter)PySetCenter, "center = (cx, cy, cz)", NULL },
-	{ "mat_inv", (getter)PyGetMatInv, (setter)PySetMatInv, "mat_inv = ((i00, i01, i02, i03), (...), (...), (...))", NULL },
+	{ "mat", (getter)PyGetMat, (setter)PySetMat, "mat = ((m00, m01, m02, m03), (...), (...), (...)) : transformation matrix", NULL },
+	{ "center", (getter)PyGetCenter, (setter)PySetCenter, "center = (cx, cy, cz) : center of rotation", NULL },
+	{ "mat_inv", (getter)PyGetMatInv, (setter)PySetMatInv, "mat_inv = ((i00, i01, i02, i03), (...), (...), (...)) : inversed transformation matrix", NULL },
 	{ NULL }  /* Sentinel */
 };
 
@@ -683,4 +770,4 @@ PyTypeObject MPGL_ModelPyType = {
 	PyNew,						/* tp_new */
 };
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

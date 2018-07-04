@@ -1,4 +1,4 @@
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 #include "MPGLGrid.h"
 #include <numpy/arrayobject.h>
@@ -46,4 +46,4 @@ PyMODINIT_FUNC initMPGLGrid(void)
 	PyModule_AddObject(m, "scene", (PyObject *)&MPGL_ScenePyType);
 }
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

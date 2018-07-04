@@ -20,3 +20,15 @@ Edit Makefile and execute make.
     make install
 
 MPGLGrid.so is created and copied to python directory.
+
+# References
++ METHODS
+  + platform_info(id) : platform information
+  + platform_num() : number of platform
+
+## Class new(...)
++ new(grid, id)
+  + grid : grid data
+  + id : platform id
++ CLASS METHODS
+  + solve(grid, dt, nloop) : solve

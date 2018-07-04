@@ -15,7 +15,7 @@ extern "C" {
 #define M_PI 3.14159265358979323846
 #endif
 
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 #ifndef Py_PYTHON_H
 #include <Python.h>
 #endif
@@ -53,7 +53,7 @@ enum { MP_GridBoundInsulate, MP_GridBoundPeriodic };
 enum { MP_GridInterCond, MP_GridInterTrans };
 
 typedef struct MP_GridData {
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 	PyObject_HEAD
 #endif
 	int size[3];

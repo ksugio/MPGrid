@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 -fPIC
+CFLAGS = -O2 -fPIC -DMP_PYTHON_LIB
 INCLUDES = -I/usr/include/python2.6 -I/usr/local/cuda/include -I../lib
 LIBS = -L/usr/local/cuda/lib64 -lOpenCL
 TARGET_D = MPCLGrid.so

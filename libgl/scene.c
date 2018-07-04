@@ -5,15 +5,6 @@ void MPGL_SceneInit(MPGL_Scene *scene)
 	scene->proj = MPGL_ProjOrtho;
 	scene->znear = 5;
 	scene->zfar = 15;
-	scene->lookat[0] = 10.0;
-	scene->lookat[1] = 0.0;
-	scene->lookat[2] = 0.0;
-	scene->lookat[3] = 0.0;
-	scene->lookat[4] = 0.0;
-	scene->lookat[5] = 0.0;
-	scene->lookat[6] = 0.0;
-	scene->lookat[7] = 0.0;
-	scene->lookat[8] = 1.0;
 	scene->mat_specular[0] = 0.8f;
 	scene->mat_specular[1] = 0.8f;
 	scene->mat_specular[2] = 0.8f;
@@ -28,6 +19,8 @@ void MPGL_SceneInit(MPGL_Scene *scene)
 	scene->clear_color[2] = 0.0;
 	scene->clear_color[3] = 0.0;
 	scene->nlight = 0;
+	scene->width = 0;
+	scene->height = 0;
 }
 
 MPGL_SceneLight *MPGL_SceneLightAdd(MPGL_Scene *scene, float x, float y, float z, float w)
@@ -110,15 +103,21 @@ void MPGL_SceneResize(MPGL_Scene *scene, int width, int height)
 	}
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(scene->lookat[0], scene->lookat[1], scene->lookat[2], 
-		scene->lookat[3], scene->lookat[4], scene->lookat[5], 
-		scene->lookat[6], scene->lookat[7], scene->lookat[8]);
+	gluLookAt(10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+	scene->width = width;
+	scene->height = height;
+}
+
+void MPGL_SceneFrontText(MPGL_Scene *scene, int x, int y, const char s[], int font_type)
+{
+	glRasterPos3d(scene->znear-1.0e-6, (2.0*x-scene->width)/scene->height, 2.0*(scene->height-y)/scene->height-1.0);
+	MPGL_TextBitmap(s, font_type);
 }
 
 /**********************************************************
 * for Python
 **********************************************************/
-#ifndef _DEBUG
+#ifdef MP_PYTHON_LIB
 
 static void PyDealloc(MPGL_Scene *self)
 {
@@ -249,53 +248,49 @@ static PyObject *PyResize(MPGL_Scene *self, PyObject *args, PyObject *kwds)
 	Py_RETURN_NONE;
 }
 
+static PyObject *PyFrontText(MPGL_Scene *self, PyObject *args, PyObject *kwds)
+{
+	int x, y;
+	const char *string;
+	int font_type;
+	static char *kwlist[] = { "x", "y", "string", "font_type", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "iisi", kwlist, &x, &y, &string, &font_type)) {
+		return NULL;
+	}
+	MPGL_SceneFrontText(self, x, y, string, font_type);
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef PyMethods[] = {
 	{ "light_add", (PyCFunction)PyLightAdd, METH_VARARGS | METH_KEYWORDS,
 	"light_add(x, y, z, w) : add light" },
 	{ "light_position", (PyCFunction)PyLightPosition, METH_VARARGS | METH_KEYWORDS,
 	"light_position(id, x, y, z, w) : set light position" },
 	{ "light_specular", (PyCFunction)PyLightSpecular, METH_VARARGS | METH_KEYWORDS,
-	"light_specular(id, r, g, b, a) : set light specular" },
+	"light_specular(id, red, green, blue, alpha) : set light specular" },
 	{ "light_diffuse", (PyCFunction)PyLightDiffuse, METH_VARARGS | METH_KEYWORDS,
-	"light_diffuse(id, r, g, b, a) : set light diffuse" },
+	"light_diffuse(id, red, green, blue, alpha) : set light diffuse" },
 	{ "light_ambient", (PyCFunction)PyLightAmbient, METH_VARARGS | METH_KEYWORDS,
-	"light_ambient(id, r, g, b, a) : set light specular" },
+	"light_ambient(id, red, green, blue, alpha) : set light ambient" },
 	{ "setup", (PyCFunction)PySetup, METH_NOARGS,
 	"setup() : setup scene" },
 	{ "resize", (PyCFunction)PyResize, METH_VARARGS | METH_KEYWORDS,
 	"resize(width, height) : resize window" },
+	{ "front_text", (PyCFunction)PyFrontText, METH_VARARGS | METH_KEYWORDS,
+	"front_text(x, y, string, font_type) : draw front text" },
 	{ NULL }  /* Sentinel */
 };
 
 static PyMemberDef PyMembers[] = {
-	{ "proj", T_INT, offsetof(MPGL_Scene, proj), 0, "projection mode, 0:frustum 1:ortho" },
-	{ "znear", T_DOUBLE, offsetof(MPGL_Scene, znear), 0, "near of viewing volume" },
-	{ "zfar", T_DOUBLE, offsetof(MPGL_Scene, zfar), 0, "far of viewing volume" },
-	{ "mat_shininess", T_FLOAT, offsetof(MPGL_Scene, mat_shininess), 0, "material shininess" },
+	{ "proj", T_INT, offsetof(MPGL_Scene, proj), 0, "proj = {0:frustum | 1:ortho} : projection mode" },
+	{ "znear", T_DOUBLE, offsetof(MPGL_Scene, znear), 0, "znear = z : znear of viewing volume" },
+	{ "zfar", T_DOUBLE, offsetof(MPGL_Scene, zfar), 0, "zfar = z : zfar of viewing volume" },
+	{ "mat_shininess", T_FLOAT, offsetof(MPGL_Scene, mat_shininess), 0, "mat_shininess = shininess : material shininess" },
+	{ "width", T_INT, offsetof(MPGL_Scene, width), 1, "width : screen width" },
+	{ "height", T_INT, offsetof(MPGL_Scene, height), 1, "height : screen height" },
 	{ NULL }  /* Sentinel */
 };
-
-static PyObject *PyGetLookat(MPGL_Scene *self, void *closure)
-{
-	return Py_BuildValue("ddddddddd", self->lookat[0], self->lookat[1], self->lookat[2],
-		self->lookat[3], self->lookat[4], self->lookat[5],
-		self->lookat[6], self->lookat[7], self->lookat[8]);
-}
-
-static int PySetLookat(MPGL_Scene *self, PyObject *value, void *closure)
-{
-	float ex, ey, ez;
-	float cx, cy, cz;
-	float ux, uy, uz;
-
-	if (!PyArg_ParseTuple(value, "fffffffff", &ex, &ey, &ez, &cx, &cy, &cz, &ux, &uy, &uz)) {
-		return -1;
-	}
-	self->lookat[0] = ex, self->lookat[1] = ey, self->lookat[2] = ez;
-	self->lookat[3] = cx, self->lookat[4] = cy, self->lookat[5] = cz;
-	self->lookat[6] = ux, self->lookat[7] = uy, self->lookat[8] = uz;
-	return 0;
-}
 
 static PyObject *PyGetMatSpecular(MPGL_Scene *self, void *closure)
 {
@@ -349,10 +344,9 @@ static int PySetClearColor(MPGL_Scene *self, PyObject *value, void *closure)
 }
 
 static PyGetSetDef PyGetSet[] = {
-	{ "lookat", (getter)PyGetLookat, (setter)PySetLookat, "lookat = (ex, ey, ez, cx, cy, cz, ux, uy, yz)", NULL },
-	{ "mat_specular", (getter)PyGetMatSpecular, (setter)PySetMatSpecular, "mat_specular = (r, g, b, a)", NULL },
-	{ "mat_emission", (getter)PyGetMatEmission, (setter)PySetMatEmission, "mat_emission = (r, g, b, a)", NULL },
-	{ "clear_color", (getter)PyGetClearColor, (setter)PySetClearColor, "clear_color = (r, g, b, a)", NULL },
+	{ "mat_specular", (getter)PyGetMatSpecular, (setter)PySetMatSpecular, "mat_specular = (red, green, blue, alpha) : material specular", NULL },
+	{ "mat_emission", (getter)PyGetMatEmission, (setter)PySetMatEmission, "mat_emission = (red, green, blue, alpha) : material emission", NULL },
+	{ "clear_color", (getter)PyGetClearColor, (setter)PySetClearColor, "clear_color = (red, green, blue, alpha) : clear color", NULL },
 	{ NULL }  /* Sentinel */
 };
 
@@ -398,4 +392,4 @@ PyTypeObject MPGL_ScenePyType = {
 	PyNew,						/* tp_new */
 };
 
-#endif /* _DEBUG */
+#endif /* MP_PYTHON_LIB */

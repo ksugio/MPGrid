@@ -24,20 +24,15 @@ GLWidget Class
 class GLWidget(QtOpenGL.QGLWidget):
   def __init__(self, parent=None):
     QtOpenGL.QGLWidget.__init__(self, QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers), parent)
-    self.lastPos = QtCore.QPoint()
-    self.mouseMode = 0
     self.colorMode = [0, 0]
     self.grid = None
     self.draw = MPGLGrid.draw()
     self.scene = MPGLGrid.scene()
-    self.scene.lookat = (0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
-    self.model = MPGLGrid.model()
+    self.model = None
     self.cmp = MPGLGrid.colormap()
     self.axis_disp = True
     self.cmp_disp = True
     self.step_disp = True
-    self.__width = 800
-    self.__height = 600
 
   def minimumSizeHint(self):
     return QtCore.QSize(320, 240)
@@ -60,67 +55,46 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.draw.draw_axis(self.grid.size)
       GL.glPopMatrix()
       if self.cmp_disp:
-        GL.glPushMatrix()
-        GL.glTranslate((2.0 - self.__width) / self.__height, -self.cmp.size[1]/2.0, self.scene.znear - 1.0e-6)
-        self.cmp.draw()
-        GL.glPopMatrix()
+        self.drawColormap()
       if self.step_disp:
-        self.drawStep()
-    
+        s = str(self.grid.step) + ' step'
+        self.drawString(10, 20, s)
+
+  def drawColormap(self):
+    GL.glPushMatrix()
+    GL.glRotated(90.0, 0.0, 0.0, 1.0)
+    GL.glRotated(90.0, 1.0, 0.0, 0.0)
+    GL.glTranslate((2.0 - self.scene.width) / self.scene.height, -self.cmp.size[1]/2.0, self.scene.znear - 1.0e-6)
+    self.cmp.draw()
+    GL.glPopMatrix()
+
+  def drawString(self, x, y, s):
+    GL.glPushAttrib(GL.GL_LIGHTING_BIT)
+    GL.glDisable(GL.GL_LIGHTING)
+    GL.glColor3fv(self.cmp.font_color)
+    self.scene.front_text(x, y, s, self.cmp.font_type)
+    GL.glPopAttrib()
+
   def resizeGL(self, width, height):
-    self.__width = width
-    self.__height = height
     self.scene.resize(width, height)
 
   def mousePressEvent(self, event):
-    self.lastPos = QtCore.QPoint(event.pos())
+    if self.model:
+      self.model.button(event.x(), event.y(), 1)
 
   def mouseReleaseEvent(self, event):
-    self.model.inverse()
+    if self.model:
+      self.model.button(event.x(), event.y(), 0)
 
   def mouseMoveEvent(self, event):
-    dx = event.x() - self.lastPos.x()
-    dy = event.y() - self.lastPos.y()
-    mod = QtGui.QApplication.keyboardModifiers()
-    if event.buttons() & QtCore.Qt.LeftButton:
-        if self.mouseMode == 0:
-            if mod == QtCore.Qt.ControlModifier:
-                cx = self.__width / 2
-                cy = self.__height / 2
-                if event.x() <= cx and event.y() <= cy:
-                    az = math.pi * (-dx + dy) / self.__height
-                elif event.x() > cx and event.y() <= cy:
-                    az = math.pi * (-dx - dy) / self.__height
-                elif event.x() <= cx and event.y() > cy:
-                    az = math.pi * (dx + dy) / self.__height
-                elif event.x() > cx and event.y() > cy:
-                    az = math.pi * (dx - dy) / self.__height
-                self.model.rot_z(-az)
-            else:
-                ay = math.pi * dx / self.__height
-                self.model.rot_y(-ay)
-                ax = math.pi *dy / self.__height
-                self.model.rot_x(-ax)
-        elif self.mouseMode == 1:
-            if mod == QtCore.Qt.ControlModifier:
-                mz = 2.0 * dy / self.__height
-                self.model.trans_z(-mz)
-            else:
-                mx = 2.0 * dx / self.__height
-                self.model.trans_x(mx)
-                my = 2.0 * dy / self.__height
-                self.model.trans_y(-my)
-        elif self.mouseMode == 2:
-            s = 1.0 - float(dy) / self.__height
-            self.model.zoom(s)
-        self.updateGL()
-        self.lastPos = QtCore.QPoint(event.pos())
-        
-  def gridFit(self):
-    region = self.draw.region(self.grid)
-    self.model.fit_center(region)
-    aspect = float(self.__width)/float(self.__height)
-    self.model.fit_scale(region, aspect)
+    if self.model:
+      if event.buttons() & QtCore.Qt.LeftButton:
+        if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
+          ctrl = 1 
+        else:
+          ctrl = 0
+        if self.model.motion(self.scene, event.x(), event.y(), ctrl):
+          self.updateGL()
 
   def cmpRange(self):
     self.draw.cmp_range(self.grid, self.cmp)    
@@ -144,16 +118,6 @@ class GLWidget(QtOpenGL.QGLWidget):
       self.cmp.grayscale()
     self.scene.setup()
     self.updateGL()
-    
-  def drawStep(self):
-    s = str(self.grid.step) + ' step'
-    GL.glPushAttrib(GL.GL_LIGHTING_BIT)
-    GL.glDisable(GL.GL_LIGHTING)
-    GL.glRasterPos3d((2.0 * 10 - self.__width) / self.__height,\
-      2.0*(self.__height - 20) / self.__height - 1.0, self.scene.znear - 1.0e-6)
-    GL.glColor3fv(self.cmp.font_color)    
-    MPGLGrid.text_bitmap(s, self.cmp.font_type)
-    GL.glPopAttrib()
 
 """
 FillDialog
@@ -976,8 +940,8 @@ class MainWindow(QtGui.QMainWindow):
   def fileNew(self):
     self.glwidget.grid = NewGridDialog.newGrid(self)
     if self.glwidget.grid:
-      self.glwidget.model.init()
-      self.glwidget.gridFit()
+      region = self.glwidget.draw.region(self.glwidget.grid)
+      self.glwidget.model = MPGLGrid.model((0,0,1,0,1,0), region)
       self.glwidget.cmp.range = (0.0, 0.0)
       self.glwidget.updateGL()
 
@@ -985,8 +949,8 @@ class MainWindow(QtGui.QMainWindow):
     fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file')
     if fname:
       self.glwidget.grid = MPGrid.read(str(fname))
-      self.glwidget.model.init()
-      self.glwidget.gridFit()
+      region = self.glwidget.draw.region(self.glwidget.grid)
+      self.glwidget.model = MPGLGrid.model((0,0,1,0,1,0), region)
       self.glwidget.cmpRange()
       self.glwidget.updateGL()
 
@@ -1090,8 +1054,8 @@ class MainWindow(QtGui.QMainWindow):
 
   def MainToolBar(self):
     toolbar = QtGui.QToolBar(self)
-    toolbar.addAction('Init', self.initModel)
-    toolbar.addAction('Fit', self.gridFit)    
+    toolbar.addAction('Reset', self.resetModel)
+    toolbar.addAction('Fit', self.fitModel)    
     toolbar.addSeparator()    
     group1 = QtGui.QButtonGroup(self)
     button1 = ToolButton('Rot', self.setMouseMode)
@@ -1130,11 +1094,11 @@ class MainWindow(QtGui.QMainWindow):
   def setMouseMode(self, pressed):
     txt = self.sender().text()
     if txt == "Rot":
-        self.glwidget.mouseMode = 0
+        self.glwidget.model.button_mode = 0
     elif txt == "Trans":
-        self.glwidget.mouseMode = 1 
+        self.glwidget.model.button_mode = 1 
     elif txt == "Zoom":
-        self.glwidget.mouseMode = 2
+        self.glwidget.model.button_mode = 2
 
   def setDrawKind(self, pressed):
     txt = self.sender().text()
@@ -1156,12 +1120,12 @@ class MainWindow(QtGui.QMainWindow):
         self.glwidget.cmpRange()
     self.glwidget.updateGL()
 
-  def initModel(self):
-    self.glwidget.model.init()
+  def resetModel(self):
+    self.glwidget.model.reset()
     self.glwidget.updateGL()
 
-  def gridFit(self):
-    self.glwidget.gridFit()
+  def fitModel(self):
+    self.glwidget.model.fit()
     self.glwidget.updateGL()
 
 class ToolButton(QtGui.QToolButton):
