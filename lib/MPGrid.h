@@ -35,9 +35,6 @@ extern "C" {
 #ifndef _INC_MATH
 #include <math.h>
 #endif
-#ifndef ZLIB_H
-#include <zlib.h>
-#endif
 #ifdef WIN32
 #pragma warning(disable:4996)
 #include <windows.h>
@@ -87,6 +84,7 @@ int MP_GridSetInterCoef3(MP_GridData *data, int inter[], double coef[], int i, i
 void MP_GridRefLocalCoef(MP_GridData *data);
 void MP_GridSetLocalCoef1(MP_GridData *data, double lcoef, short type0, short type1);
 void MP_GridSetLocalCoef3(MP_GridData *data, double lcoef[], short type0, short type1);
+double MP_GridOverallCoef(MP_GridData *data, int dir, double q);
 int MP_GridFillType(MP_GridData *data, short type,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridFillUpdate(MP_GridData *data, short update,

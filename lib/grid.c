@@ -1,5 +1,6 @@
 #include "MPGrid.h"
 #include <time.h>
+#include <zlib.h>
 
 int MP_GridAlloc(MP_GridData *data, int nx, int ny, int nz, int ntype, int local_coef)
 {
@@ -570,6 +571,113 @@ void MP_GridSetLocalCoef3(MP_GridData *data, double lcoef[], short type0, short 
 			}
 		}
 	}
+}
+
+double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
+{
+	int x, y, z;
+	int id0, id1;
+	int cid;
+	double val, ktot;
+	int nx = data->size[0];
+	int ny = data->size[1];
+	int nz = data->size[2];
+
+	ktot = 0.0;
+	if (dir == 0) {
+		if (!data->local_coef) {
+			for (z = 0; z < nz; z++) {
+				for (y = 0; y < ny; y++) {
+					val = 0.0;
+					for (x = 0; x < nx - 1; x++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x + 1, y, z);
+						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
+						if (data->inter_x[cid] == MP_GridInterCond) val -= q * data->element[0] / data->coef_x[cid];
+						else if (data->inter_x[cid] == MP_GridInterTrans) val -= q / data->coef_x[cid];
+					}
+					ktot = -q * (nx - 1) * data->element[0] / val;
+				}
+			}
+		}
+		else {
+			for (z = 0; z < nz; z++) {
+				for (y = 0; y < ny; y++) {
+					val = 0.0;
+					for (x = 0; x < nx - 1; x++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x + 1, y, z);
+						val -= q / data->cx[id1];
+					}
+					ktot = -q * (nx - 1) * data->element[0] / val;
+				}
+			}
+		}
+		return ktot / ny * nz;
+	}
+	else if (dir == 1) {
+		if (!data->local_coef) {
+			for (z = 0; z < nz; z++) {
+				for (x = 0; x < nx; x++) {
+					val = 0.0;
+					for (y = 0; y < ny - 1; y++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x, y + 1, z);
+						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
+						if (data->inter_y[cid] == MP_GridInterCond) val -= q * data->element[1] / data->coef_y[cid];
+						else if (data->inter_y[cid] == MP_GridInterTrans) val -= q / data->coef_y[cid];
+					}
+					ktot += -q * (ny - 1) * data->element[1] / val;
+				}
+			}
+		}
+		else {
+			for (z = 0; z < nz; z++) {
+				for (x = 0; x < nx; x++) {
+					val = 0.0;
+					for (y = 0; y < ny - 1; y++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x, y + 1, z);
+						val -= q / data->cy[id1];
+					}
+					ktot += -q * (ny - 1) * data->element[1] / val;
+				}
+			}
+		}
+		return ktot / nx * nz;
+	}
+	else if (dir == 2) {
+		if (!data->local_coef) {
+			for (y = 0; y < ny; y++) {
+				for (x = 0; x < nx; x++) {
+					val = 0.0;
+					for (z = 0; z < nz - 1; z++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x, y, z + 1);
+						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
+						if (data->inter_z[cid] == MP_GridInterCond) val -= q * data->element[2] / data->coef_z[cid];
+						else if (data->inter_z[cid] == MP_GridInterTrans) val -= q / data->coef_z[cid];
+					}
+					ktot += -q * (nz - 1) * data->element[2] / val;
+				}
+			}
+		}
+		else {
+			for (y = 0; y < ny; y++) {
+				for (x = 0; x < nx; x++) {
+					val = 0.0;
+					for (z = 0; z < nz - 1; z++) {
+						id0 = MP_GRID_INDEX(data, x, y, z);
+						id1 = MP_GRID_INDEX(data, x, y, z + 1);
+						val -= q / data->cz[id1];
+					}
+					ktot += -q * (nz - 1) * data->element[2] / val;
+				}
+			}
+		}
+		return ktot / nx * ny;
+	}
+	return 0.0;
 }
 
 int MP_GridFillType(MP_GridData *data, short type,

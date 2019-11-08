@@ -636,6 +636,18 @@ static PyObject *PyGridSetLocalCoef3(MP_GridData *self, PyObject *args, PyObject
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyGridOverallCoef(MP_GridData* self, PyObject* args, PyObject* kwds)
+{
+	int dir;
+	double q;
+	static char* kwlist[] = { "dir", "q", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "id", kwlist, &dir, &q)) {
+		return NULL;
+	}
+	return Py_BuildValue("d", MP_GridOverallCoef(self, dir, q));
+}
+
 static PyObject *PyGridGetRhoc(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	int i;
@@ -806,6 +818,8 @@ static PyMethodDef PyGridMethods[] = {
 	"set_local_coef1(c, type0, type1) : set local coefficient by type" },
 	{ "set_local_coef3", (PyCFunction)PyGridSetLocalCoef3, METH_VARARGS | METH_KEYWORDS,
 	"set_local_coef3((cx, cy, cz), type0, type1) : set local coefficient by type" },
+	{ "overall_coef", (PyCFunction)PyGridOverallCoef, METH_VARARGS | METH_KEYWORDS,
+	"overall_coef(dir, q) : calculate overall coefficient" },
 	{ "get_rhoc", (PyCFunction)PyGridGetRhoc, METH_VARARGS | METH_KEYWORDS,
 	"get_rhoc(i) : get coefficient, rhoc x c" },
 	{ "set_rhoc", (PyCFunction)PyGridSetRhoc, METH_VARARGS | METH_KEYWORDS,

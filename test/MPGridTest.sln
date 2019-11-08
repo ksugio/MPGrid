@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29503.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPGridTest", "MPGridTest.vcxproj", "{A9A4FA3A-4015-4601-9527-39169BD84935}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA} = {D7054A70-DD1A-485C-8F49-5072B6892CAA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPGrid", "..\lib\MPGrid.vcxproj", "{D7054A70-DD1A-485C-8F49-5072B6892CAA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPGLGrid", "..\libgl\MPGLGrid.vcxproj", "{50CD3421-6251-436A-8F5A-B87ED44A3365}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPCLGrid", "..\libcl\MPCLGrid.vcxproj", "{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Debug|x64.ActiveCfg = Debug|x64
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Debug|x64.Build.0 = Debug|x64
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Debug|x86.ActiveCfg = Debug|Win32
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Debug|x86.Build.0 = Debug|Win32
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Release|x64.ActiveCfg = Release|x64
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Release|x64.Build.0 = Release|x64
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Release|x86.ActiveCfg = Release|Win32
+		{A9A4FA3A-4015-4601-9527-39169BD84935}.Release|x86.Build.0 = Release|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Debug|x64.ActiveCfg = Debug|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Debug|x86.ActiveCfg = Debug|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Debug|x86.Build.0 = Debug|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Release|x64.ActiveCfg = Release|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Release|x86.ActiveCfg = Release|Win32
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA}.Release|x86.Build.0 = Release|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Debug|x64.ActiveCfg = Debug|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Debug|x86.ActiveCfg = Debug|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Debug|x86.Build.0 = Debug|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Release|x64.ActiveCfg = Release|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Release|x86.ActiveCfg = Release|Win32
+		{50CD3421-6251-436A-8F5A-B87ED44A3365}.Release|x86.Build.0 = Release|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Debug|x64.ActiveCfg = Debug|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Debug|x86.ActiveCfg = Debug|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Debug|x86.Build.0 = Debug|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Release|x64.ActiveCfg = Release|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Release|x86.ActiveCfg = Release|Win32
+		{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5023DF5B-E8FD-4069-A898-557FFC3BCEBF}
+	EndGlobalSection
+EndGlobal
