@@ -24,12 +24,12 @@ void GridAl10C(MP_GridData *data)
 	double lam_c[] = { 1200.0, 1200.0, 1200.0 };
 	double lam_al_c[] = { 394.4289694, 394.4289694, 394.4289694 };
 
-	MP_GridAlloc(data, 100, 100, 1, 2, TRUE);
-	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 99, 0);
-	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 99, 0);
-	MP_GridFillType(data, 1, 44, 0, 0, 54, 99, 0);
-	MP_GridFillVal(data, 300.0, 1, 0, 0, 99, 99, 0);
-	MP_GridFillVal(data, 300.0 + 10.0, 0, 0, 0, 0, 99, 0);
+	MP_GridAlloc(data, 100, 10, 20, 2, TRUE);
+	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 9, 19);
+	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 9, 19);
+	MP_GridFillType(data, 1, 44, 0, 0, 54, 9, 19);
+	MP_GridFillVal(data, 300.0, 1, 0, 0, 99, 9, 19);
+	MP_GridFillVal(data, 300.0 + 10.0, 0, 0, 0, 0, 9, 19);
 	data->element[0] = 1.0e-4;
 	data->element[1] = 1.0e-4;
 	data->element[2] = 1.0e-4;
@@ -40,7 +40,6 @@ void GridAl10C(MP_GridData *data)
 	MP_GridRefLocalCoef(data);
 	data->rhoc[0] = 2465.1;
 	data->rhoc[1] = 855.6;
-
 }
 
 void GridAl10CTrans(MP_GridData *data)
@@ -133,11 +132,13 @@ main(int argc, char *argv[])
 	MP_GridData data;
 
 	//GridAl(&data);
-	GridAl10C(&data);
-	//GridAl10CTrans(&data);
+	//GridAl10C(&data);
+	GridAl10CTrans(&data);
 	//Solve(&data);
-	SolveCL(&data);
-	//fprintf(stderr, "%e\n", MP_GridOverallCoef(&data, 0, 1.0e7));
+	//SolveCL(&data);
+	fprintf(stderr, "overall_coef_x %e\n", MP_GridOverallCoef(&data, 0, 1.0e7));
+	fprintf(stderr, "overall_coef_y %e\n", MP_GridOverallCoef(&data, 1, 1.0e7));
+	fprintf(stderr, "overall_coef_z %e\n", MP_GridOverallCoef(&data, 2, 1.0e7));
 	GlutWindow(&data, 800, 600, argc, argv);
 	MP_GridFree(&data);
 }

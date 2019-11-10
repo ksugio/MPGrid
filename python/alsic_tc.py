@@ -14,7 +14,7 @@ if __name__ == "__main__":
     nr = 5
     vlr = 1
     elm = 1.0e-6
-    findv = 1.0e-13
+    findv = 1.0e-15
     lam_al = 236
     lam_sic = 270
     h_al_sic = 2.227e8
@@ -40,6 +40,7 @@ if __name__ == "__main__":
         if dv < findv:
             break
     g.write(fnamef, 8)
+    print 'overall_coef', g.overall_coef(0, 1.0e7)
     endtime = time.clock()
     print '----- Execution time =', endtime-starttime, '-----'
 

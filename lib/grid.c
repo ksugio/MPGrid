@@ -593,10 +593,10 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x + 1, y, z);
 						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
-						if (data->inter_x[cid] == MP_GridInterCond) val -= q * data->element[0] / data->coef_x[cid];
-						else if (data->inter_x[cid] == MP_GridInterTrans) val -= q / data->coef_x[cid];
+						if (data->inter_x[cid] == MP_GridInterCond) val += -q * data->element[0] / data->coef_x[cid];
+						else if (data->inter_x[cid] == MP_GridInterTrans) val += -q / data->coef_x[cid];
 					}
-					ktot = -q * (nx - 1) * data->element[0] / val;
+					ktot += -q * (nx - 1) * data->element[0] / val;
 				}
 			}
 		}
@@ -607,13 +607,13 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 					for (x = 0; x < nx - 1; x++) {
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x + 1, y, z);
-						val -= q / data->cx[id1];
+						val += -q / data->cx[id1];
 					}
-					ktot = -q * (nx - 1) * data->element[0] / val;
+					ktot += -q * (nx - 1) * data->element[0] / val;
 				}
 			}
 		}
-		return ktot / ny * nz;
+		return ktot / (ny * nz);
 	}
 	else if (dir == 1) {
 		if (!data->local_coef) {
@@ -624,8 +624,8 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x, y + 1, z);
 						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
-						if (data->inter_y[cid] == MP_GridInterCond) val -= q * data->element[1] / data->coef_y[cid];
-						else if (data->inter_y[cid] == MP_GridInterTrans) val -= q / data->coef_y[cid];
+						if (data->inter_y[cid] == MP_GridInterCond) val += -q * data->element[1] / data->coef_y[cid];
+						else if (data->inter_y[cid] == MP_GridInterTrans) val += -q / data->coef_y[cid];
 					}
 					ktot += -q * (ny - 1) * data->element[1] / val;
 				}
@@ -638,13 +638,13 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 					for (y = 0; y < ny - 1; y++) {
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x, y + 1, z);
-						val -= q / data->cy[id1];
+						val += -q / data->cy[id1];
 					}
 					ktot += -q * (ny - 1) * data->element[1] / val;
 				}
 			}
 		}
-		return ktot / nx * nz;
+		return ktot / (nx * nz);
 	}
 	else if (dir == 2) {
 		if (!data->local_coef) {
@@ -655,8 +655,8 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x, y, z + 1);
 						cid = MP_GRID_COEF_INDEX(data, data->type[id0], data->type[id1]);
-						if (data->inter_z[cid] == MP_GridInterCond) val -= q * data->element[2] / data->coef_z[cid];
-						else if (data->inter_z[cid] == MP_GridInterTrans) val -= q / data->coef_z[cid];
+						if (data->inter_z[cid] == MP_GridInterCond) val += -q * data->element[2] / data->coef_z[cid];
+						else if (data->inter_z[cid] == MP_GridInterTrans) val += -q / data->coef_z[cid];
 					}
 					ktot += -q * (nz - 1) * data->element[2] / val;
 				}
@@ -669,13 +669,13 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 					for (z = 0; z < nz - 1; z++) {
 						id0 = MP_GRID_INDEX(data, x, y, z);
 						id1 = MP_GRID_INDEX(data, x, y, z + 1);
-						val -= q / data->cz[id1];
+						val += -q / data->cz[id1];
 					}
 					ktot += -q * (nz - 1) * data->element[2] / val;
 				}
 			}
 		}
-		return ktot / nx * ny;
+		return ktot / (nx * ny);
 	}
 	return 0.0;
 }
