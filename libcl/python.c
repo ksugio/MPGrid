@@ -2,10 +2,16 @@
 
 #include "MPCLGrid.h"
 
+#if PY_MAJOR_VERSION >= 3
+#define PY3
+#endif
+
 static void PyGridKernelDealloc(MPCL_GridKernelData* self)
 {
 	MPCL_GridKernelFinal(self);
+#ifndef PY3
 	self->ob_type->tp_free((PyObject*)self);
+#endif
 }
 
 static PyObject *PyGridKernelNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -54,7 +60,9 @@ static PyMethodDef PyGridKernelMethods[] = {
 
 static PyTypeObject MPCLGridNewPyType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPCLGrid.new",				/*tp_name*/
 	sizeof(MPCL_GridKernelData),/*tp_basicsize*/
 	0,							/*tp_itemsize*/
@@ -139,18 +147,38 @@ static PyMethodDef MPCLGridPyMethods[] = {
 	{ NULL }  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
+#ifdef PY3
+static struct PyModuleDef MPCLGridPyModule = {
+	PyModuleDef_HEAD_INIT,
+	"MPCLGrid",
+	NULL,
+	-1,
+	MPCLGridPyMethods,
+};
 #endif
+
+#ifndef PY3
 PyMODINIT_FUNC initMPCLGrid(void)
+#else
+PyMODINIT_FUNC PyInit_MPCLGrid(void)
+#endif
 {
 	PyObject *m;
 
+#ifndef PY3
 	if (PyType_Ready(&MPCLGridNewPyType) < 0) return;
 	m = Py_InitModule3("MPCLGrid", MPCLGridPyMethods, "MPCLGrid extention");
 	if (m == NULL) return;
+#else
+	if (PyType_Ready(&MPCLGridNewPyType) < 0) return NULL;
+	m = PyModule_Create(&MPCLGridPyModule);
+	if (m == NULL) return NULL;
+#endif
 	Py_INCREF(&MPCLGridNewPyType);
 	PyModule_AddObject(m, "new", (PyObject *)&MPCLGridNewPyType);
+#ifdef PY3
+	return m;
+#endif
 }
 
 #endif /* MP_PYTHON_LIB */

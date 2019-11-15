@@ -552,7 +552,9 @@ void MPGL_GridDrawRegion(MPGL_GridDrawData *draw, MP_GridData *data, float regio
 
 static void PyDealloc(MPGL_GridDrawData *self)
 {
+#ifndef PY3
 	self->ob_type->tp_free((PyObject*)self);
+#endif
 }
 
 static PyObject *PyNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -708,7 +710,9 @@ static PyGetSetDef PyGetSet[] = {
 
 PyTypeObject MPGL_GridDrawDataPyType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPGLGrid.draw",			/*tp_name*/
 	sizeof(MPGL_GridDrawData),	/*tp_basicsize*/
 	0,							/*tp_itemsize*/

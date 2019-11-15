@@ -2,10 +2,16 @@
 
 #include "MPGrid.h"
 
+#if PY_MAJOR_VERSION >= 3
+#define PY3
+#endif
+
 static void PyGridDealloc(MP_GridData* self)
 {
 	MP_GridFree(self);
+#ifndef PY3
 	self->ob_type->tp_free((PyObject*)self);
+#endif
 }
 
 static PyObject *PyGridNewNew(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -891,7 +897,9 @@ static PyGetSetDef PyGridGetSet[] = {
 
 static PyTypeObject PyGridNewType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPGrid.new",				/*tp_name*/
 	sizeof(MP_GridData),		/*tp_basicsize*/
 	0,							/*tp_itemsize*/
@@ -933,7 +941,9 @@ static PyTypeObject PyGridNewType = {
 
 static PyTypeObject PyGridReadType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPGrid.read",				/*tp_name*/
 	sizeof(MP_GridData),		/*tp_basicsize*/
 	0,							/*tp_itemsize*/
@@ -975,7 +985,9 @@ static PyTypeObject PyGridReadType = {
 
 static PyTypeObject PyGridCopyType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPGrid.copy",				/*tp_name*/
 	sizeof(MP_GridData),		/*tp_basicsize*/
 	0,							/*tp_itemsize*/
@@ -1017,7 +1029,9 @@ static PyTypeObject PyGridCopyType = {
 
 static PyTypeObject PyGridCloneType = {
 	PyObject_HEAD_INIT(NULL)
+#ifndef PY3
 	0,							/*ob_size*/
+#endif
 	"MPGrid.clone",				/*tp_name*/
 	sizeof(MP_GridData),		/*tp_basicsize*/
 	0,							/*tp_itemsize*/
@@ -1061,19 +1075,39 @@ static PyMethodDef MPGridPyMethods[] = {
 	{ NULL }  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
+#ifdef PY3
+static struct PyModuleDef MPGridPyModule = {
+	PyModuleDef_HEAD_INIT,
+	"MPGrid",
+	NULL,
+	-1,
+	MPGridPyMethods,
+};
 #endif
+
+#ifndef PY3
 PyMODINIT_FUNC initMPGrid(void)
+#else
+PyMODINIT_FUNC PyInit_MPGrid(void)
+#endif
 {
 	PyObject *m;
 
+#ifndef PY3
 	if (PyType_Ready(&PyGridNewType) < 0) return;
 	if (PyType_Ready(&PyGridReadType) < 0) return;
 	if (PyType_Ready(&PyGridCopyType) < 0) return;
 	if (PyType_Ready(&PyGridCloneType) < 0) return;
 	m = Py_InitModule3("MPGrid", MPGridPyMethods, "MPGrid extention");
 	if (m == NULL) return;
+#else
+	if (PyType_Ready(&PyGridNewType) < 0) return NULL;
+	if (PyType_Ready(&PyGridReadType) < 0) return NULL;
+	if (PyType_Ready(&PyGridCopyType) < 0) return NULL;
+	if (PyType_Ready(&PyGridCloneType) < 0) return NULL;
+	m = PyModule_Create(&MPGridPyModule);
+	if (m == NULL) return NULL;
+#endif
 	Py_INCREF(&PyGridNewType);
 	PyModule_AddObject(m, "new", (PyObject *)&PyGridNewType);
 	Py_INCREF(&PyGridReadType);
@@ -1088,6 +1122,9 @@ PyMODINIT_FUNC initMPGrid(void)
 	PyModule_AddIntConstant(m, "BoundPeriodic", MP_GridBoundPeriodic);
 	PyModule_AddIntConstant(m, "InterCond", MP_GridInterCond);
 	PyModule_AddIntConstant(m, "InterTrans", MP_GridInterTrans);
+#ifdef PY3
+	return m;
+#endif
 }
 
 #endif /* MP_PYTHON_LIB */

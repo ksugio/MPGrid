@@ -22,19 +22,39 @@ static PyMethodDef MPGLGridPyMethods[] = {
 	{ NULL }  /* Sentinel */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
+#ifdef PY3
+static struct PyModuleDef MPGLGridPyModule = {
+	PyModuleDef_HEAD_INIT,
+	"MPGLGrid",
+	NULL,
+	-1,
+	MPGLGridPyMethods,
+};
 #endif
+
+#ifndef PY3
 PyMODINIT_FUNC initMPGLGrid(void)
+#else
+PyMODINIT_FUNC PyInit_MPGLGrid(void)
+#endif
 {
 	PyObject *m;
 
+#ifndef PY3
 	if (PyType_Ready(&MPGL_GridDrawDataPyType) < 0) return;
 	if (PyType_Ready(&MPGL_ModelPyType) < 0) return;
 	if (PyType_Ready(&MPGL_ColormapPyType) < 0) return;
 	if (PyType_Ready(&MPGL_ScenePyType) < 0) return;
 	m = Py_InitModule3("MPGLGrid", MPGLGridPyMethods, "MPGLGrid extention");
 	if (m == NULL) return;
+#else
+	if (PyType_Ready(&MPGL_GridDrawDataPyType) < 0) return NULL;
+	if (PyType_Ready(&MPGL_ModelPyType) < 0) return NULL;
+	if (PyType_Ready(&MPGL_ColormapPyType) < 0) return NULL;
+	if (PyType_Ready(&MPGL_ScenePyType) < 0) return NULL;
+	m = PyModule_Create(&MPGLGridPyModule);
+	if (m == NULL) return NULL;
+#endif
 	import_array();
 	Py_INCREF(&MPGL_GridDrawDataPyType);
 	PyModule_AddObject(m, "draw", (PyObject *)&MPGL_GridDrawDataPyType);
@@ -44,6 +64,9 @@ PyMODINIT_FUNC initMPGLGrid(void)
 	PyModule_AddObject(m, "colormap", (PyObject *)&MPGL_ColormapPyType);
 	Py_INCREF(&MPGL_ScenePyType);
 	PyModule_AddObject(m, "scene", (PyObject *)&MPGL_ScenePyType);
+#ifdef PY3
+	return m;
+#endif
 }
 
 #endif /* MP_PYTHON_LIB */

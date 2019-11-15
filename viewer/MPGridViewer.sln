@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29503.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MPGridViewer", "MPGridViewer.pyproj", "{46DA5B7C-366B-4FFC-8AAA-B6EA243A77F4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46DA5B7C-366B-4FFC-8AAA-B6EA243A77F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46DA5B7C-366B-4FFC-8AAA-B6EA243A77F4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{46DA5B7C-366B-4FFC-8AAA-B6EA243A77F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46DA5B7C-366B-4FFC-8AAA-B6EA243A77F4}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6871D8D0-41B5-401E-B792-D20F698FDB25}
+	EndGlobalSection
+EndGlobal
