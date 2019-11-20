@@ -585,6 +585,7 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 
 	ktot = 0.0;
 	if (dir == 0) {
+		if (nx <= 1) return 0.0;
 		if (!data->local_coef) {
 			for (z = 0; z < nz; z++) {
 				for (y = 0; y < ny; y++) {
@@ -616,6 +617,7 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 		return ktot / (ny * nz);
 	}
 	else if (dir == 1) {
+		if (ny <= 1) return 0.0;
 		if (!data->local_coef) {
 			for (z = 0; z < nz; z++) {
 				for (x = 0; x < nx; x++) {
@@ -647,6 +649,7 @@ double MP_GridOverallCoef(MP_GridData *data, int dir, double q)
 		return ktot / (nx * nz);
 	}
 	else if (dir == 2) {
+		if (nz <= 1) return 0.0;
 		if (!data->local_coef) {
 			for (y = 0; y < ny; y++) {
 				for (x = 0; x < nx; x++) {

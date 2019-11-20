@@ -58,7 +58,7 @@ class GLWidget(QtOpenGL.QGLWidget):
     GL.glPushMatrix()
     GL.glRotated(90.0, 0.0, 0.0, 1.0)
     GL.glRotated(90.0, 1.0, 0.0, 0.0)
-    GL.glTranslate((2.0 - self.scene.width) / self.scene.height, -self.cmp.size[1]/2.0, self.scene.znear - 1.0e-6)
+    GL.glTranslate((2.0 - self.scene.width) / self.scene.height, -self.cmp.size[1] / 2.0, self.scene.znear - 1.0e-6)
     self.cmp.draw()
     GL.glPopMatrix()
 
@@ -91,7 +91,8 @@ class GLWidget(QtOpenGL.QGLWidget):
           self.updateGL()
 
   def cmpRange(self):
-    self.draw.cmp_range(self.grid, self.cmp)    
+    if self.grid:
+      self.draw.cmp_range(self.grid, self.cmp)    
 
   def screenShot(self):
     buf = GL.glReadPixels(0, 0, self.width(), self.height(), GL.GL_RGB, GL.GL_UNSIGNED_BYTE)
@@ -133,7 +134,7 @@ class FillDialog(QtWidgets.QDialog):
     if item == 'Type':
       self.spin = QtWidgets.QSpinBox()
       hbox1.addWidget(self.spin)
-      self.spin.setMaximum(grid.ntype-1)
+      self.spin.setMaximum(grid.ntype - 1)
     elif item == 'Update':
       self.combo1 = QtWidgets.QComboBox()
       hbox1.addWidget(self.combo1)
@@ -149,20 +150,20 @@ class FillDialog(QtWidgets.QDialog):
     label2 = QtWidgets.QLabel()
     label2.setText("Start (x0, y0, z0)")
     glay.addWidget(label2, 0, 0)
-    self.spinx0 = self.SpinBox(grid.size[0]-1)
+    self.spinx0 = self.SpinBox(grid.size[0] - 1)
     glay.addWidget(self.spinx0, 0, 1)
-    self.spiny0 = self.SpinBox(grid.size[1]-1)
+    self.spiny0 = self.SpinBox(grid.size[1] - 1)
     glay.addWidget(self.spiny0, 0, 2)
-    self.spinz0 = self.SpinBox(grid.size[2]-1)
+    self.spinz0 = self.SpinBox(grid.size[2] - 1)
     glay.addWidget(self.spinz0, 0, 3)
     label3 = QtWidgets.QLabel(self)
     label3.setText("End (x1, y1, z1)")
     glay.addWidget(label3, 1, 0)
-    self.spinx1 = self.SpinBox(grid.size[0]-1)
+    self.spinx1 = self.SpinBox(grid.size[0] - 1)
     glay.addWidget(self.spinx1, 1, 1)
-    self.spiny1 = self.SpinBox(grid.size[1]-1)
+    self.spiny1 = self.SpinBox(grid.size[1] - 1)
     glay.addWidget(self.spiny1, 1, 2)
-    self.spinz1 = self.SpinBox(grid.size[2]-1)
+    self.spinz1 = self.SpinBox(grid.size[2] - 1)
     glay.addWidget(self.spinz1, 1, 3)
     if method == 'Cylinder':
       hbox2 = QtWidgets.QHBoxLayout()
@@ -177,7 +178,7 @@ class FillDialog(QtWidgets.QDialog):
       self.combo2.addItem('z')
     self.button = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.button)
-    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.button.accepted.connect(self.Accept)
     self.button.rejected.connect(self.reject)
 
@@ -256,11 +257,11 @@ class NewGridDialog(QtWidgets.QDialog):
     hbox2.addWidget(label2)
     self.spinntype = self.SpinBox(100)
     hbox2.addWidget(self.spinntype)
-    self.check = QtWidgets.QCheckBox("Local Coefficient");
+    self.check = QtWidgets.QCheckBox("Local Coefficient")
     vbox.addWidget(self.check)
     self.button = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.button)
-    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.button.accepted.connect(self.accept)
     self.button.rejected.connect(self.reject)
 
@@ -268,22 +269,143 @@ class NewGridDialog(QtWidgets.QDialog):
     spin = QtWidgets.QSpinBox()
     spin.setMinimum(1)
     spin.setMaximum(max)
-    spin.setMinimumWidth(50)
+    spin.setMaximumWidth(150)
     return spin    
 
-  @staticmethod
   def newGrid(self):
-    dlg = NewGridDialog(self)
-    ok = dlg.exec_()
-    if ok:
-      nx = dlg.spinnx.value()
-      ny = dlg.spinny.value()
-      nz = dlg.spinnz.value()
-      ntype = dlg.spinntype.value()
-      if (dlg.check.isChecked()):
-        grid = MPGrid.new(nx, ny, nz, ntype, 1)
-      else:
-        grid = MPGrid.new(nx, ny, nz, ntype, 0)        
+    nx = self.spinnx.value()
+    ny = self.spinny.value()
+    nz = self.spinnz.value()
+    ntype = self.spinntype.value()
+    if (self.check.isChecked()):
+      grid = MPGrid.new(nx, ny, nz, ntype, 1)
+    else:
+      grid = MPGrid.new(nx, ny, nz, ntype, 0)        
+    return grid
+
+"""
+FromImageDialog
+""" 
+class ImageScene(QtWidgets.QGraphicsScene):
+  pickColor = QtCore.pyqtSignal(int, int, int)
+
+  def __init__(self, *argv, **keywords):
+    super(ImageScene, self).__init__(*argv, **keywords)
+
+  def setImage(self, cvimg):
+    if len(cvimg.shape) == 2:
+      height, width = cvimg.shape
+      qimg = QtGui.QImage(cvimg.data, width, height, width, QtGui.QImage.Format_Indexed8)
+    elif len(cvimg.shape) == 3:  
+      height, width, dim = cvimg.shape
+      qimg = QtGui.QImage(cvimg.data, width, height, dim*width, QtGui.QImage.Format_RGB888)
+      qimg = qimg.rgbSwapped()
+    self.pixmap = QtGui.QPixmap.fromImage(qimg)
+    self.clear()
+    self.addPixmap(self.pixmap)
+
+  def mousePressEvent(self, event):
+    if event.button() == QtCore.Qt.LeftButton:
+      x = event.scenePos().x()    
+      y = event.scenePos().y()
+      c = self.pixmap.toImage().pixel(x, y)
+      colors = QtGui.QColor(c).getRgb()
+      self.pickColor.emit(colors[0], colors[1], colors[2])
+
+class FromImageDialog(QtWidgets.QDialog):
+  def __init__(self, parent):
+    QtWidgets.QDialog.__init__(self, parent)
+    self.setWindowTitle("From Image")
+    self.colors = []
+    self.cvimg = None
+    hbox = QtWidgets.QHBoxLayout(self)
+    vbox = QtWidgets.QVBoxLayout()
+    hbox.addLayout(vbox)
+    button0 = QtWidgets.QPushButton('Load Image')
+    button0.clicked[bool].connect(self.loadImage)
+    vbox.addWidget(button0)
+    self.list = QtWidgets.QListWidget()
+    vbox.addWidget(self.list)
+    hbox1 = QtWidgets.QHBoxLayout()
+    vbox.addLayout(hbox1)
+    self.spinr = self.SpinBox()
+    self.spinr.setPrefix('R : ')
+    hbox1.addWidget(self.spinr)
+    self.sping = self.SpinBox()
+    self.sping.setPrefix('G : ')
+    hbox1.addWidget(self.sping)
+    self.spinb = self.SpinBox()
+    self.spinb.setPrefix('B : ')
+    hbox1.addWidget(self.spinb)
+    hbox2 = QtWidgets.QHBoxLayout()
+    vbox.addLayout(hbox2)
+    button1 = QtWidgets.QPushButton('Add Color')
+    button1.clicked[bool].connect(self.addColor)
+    hbox2.addWidget(button1)
+    button2 = QtWidgets.QPushButton('Delete Color')
+    button2.clicked[bool].connect(self.delColor)
+    hbox2.addWidget(button2)
+    self.buttonb = QtWidgets.QDialogButtonBox()
+    vbox.addWidget(self.buttonb)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.accepted.connect(self.accept)
+    self.buttonb.rejected.connect(self.reject)
+    view = QtWidgets.QGraphicsView()
+    view.setMinimumSize(640, 480)
+    self.scene = ImageScene()
+    self.scene.pickColor.connect(self.pickColor)
+    view.setScene(self.scene)
+    hbox.addWidget(view)
+
+  def SpinBox(self):
+    spin = QtWidgets.QSpinBox()
+    spin.setMinimum(0)
+    spin.setMaximum(255)
+    spin.setMaximumWidth(100)
+    return spin    
+
+  def loadImage(self):
+     fname = QtWidgets.QFileDialog.getOpenFileName(self, 'File', filter='Image Files (*.jpg *.png *.tif *.bmp);;All Files (*.*)')[0]
+     if fname:
+       self.cvimg = cv2.imread(fname)
+       self.scene.setImage(self.cvimg)
+
+  def pickColor(self, r, g, b):
+    self.spinr.setValue(r)
+    self.sping.setValue(g)
+    self.spinb.setValue(b)
+
+  def addColor(self):
+    rgb = [self.spinr.value(), self.sping.value(), self.spinb.value()]
+    if rgb not in self.colors:
+      self.colors.append(rgb)
+    self.updateList()
+
+  def delColor(self):
+    row = self.list.currentRow()
+    if row >= 0:
+      self.colors.pop(row)
+      self.updateList()
+
+  def updateList(self):
+    self.list.clear()
+    for i in range(len(self.colors)):
+      txt = 'Type{} : {}'.format(i+1, self.colors[i])
+      self.list.addItem(txt)
+
+  def newGrid(self):
+    if self.cvimg is not None:
+      img0 = cv2.cvtColor(self.cvimg, cv2.COLOR_BGR2RGB)
+      img = cv2.flip(img0, 0)
+      nx = img.shape[1]
+      ny = img.shape[0]
+      ntype = len(self.colors)+1
+      grid = MPGrid.new(nx, ny, 1, ntype, 0)
+      for x in range(nx):
+        for y in range(ny):
+          for i in range(len(self.colors)):
+            if img[y, x, 0] == self.colors[i][0] and img[y, x, 1] == self.colors[i][1] and img[y, x, 2] == self.colors[i][2]:
+              grid.set_type(i+1, (x, y, 0))
       return grid
     else:
       return None
@@ -297,7 +419,7 @@ class InterCoefDialog(QtWidgets.QDialog):
     self.grid = grid
     self.setWindowTitle("Interface and Coefficient Setting")
     vbox = QtWidgets.QVBoxLayout(self)
-    self.table = QtWidgets.QTableWidget(grid.ntype*grid.ntype, 7)
+    self.table = QtWidgets.QTableWidget(grid.ntype * grid.ntype, 7)
     self.SetTable()
     self.table.cellClicked[int,int].connect(self.cellClicked)
     vbox.addWidget(self.table)
@@ -307,7 +429,7 @@ class InterCoefDialog(QtWidgets.QDialog):
     self.combo1.setMaximumWidth(80)
     for i in range(grid.ntype):
       for j in range(grid.ntype):
-        self.combo1.addItem('Type '+str(i)+', '+str(j))
+        self.combo1.addItem('Type ' + str(i) + ', ' + str(j))
     hbox.addWidget(self.combo1)
     self.combo2 = QtWidgets.QComboBox()
     self.combo2.setMaximumWidth(80)
@@ -329,7 +451,7 @@ class InterCoefDialog(QtWidgets.QDialog):
     hbox.addWidget(self.button)
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -391,12 +513,12 @@ class InterCoefDialog(QtWidgets.QDialog):
     self.table.setItem(row, 6, item)
   
   def SetTable(self):
-    labels = ['Type i, j', 'Inter x', 'Inter y', 'Inter z', 'Coef x', 'Coef y', 'Coef z' ]
+    labels = ['Type i, j', 'Inter x', 'Inter y', 'Inter z', 'Coef x', 'Coef y', 'Coef z']
     self.table.setHorizontalHeaderLabels(labels)
     row = 0
     for i in range(self.grid.ntype):
       for j in range(self.grid.ntype):
-        item = QtWidgets.QTableWidgetItem(str(i)+', '+str(j))
+        item = QtWidgets.QTableWidgetItem(str(i) + ', ' + str(j))
         self.table.setItem(row, 0, item)
         inter = self.grid.get_inter(i, j)
         coef = self.grid.get_coef(i, j)
@@ -418,7 +540,7 @@ class InterCoefDialog(QtWidgets.QDialog):
       try:
         coef = [float(txt_x), float(txt_y), float(txt_z)]
         i = int(row / self.grid.ntype)
-        j = int(row - i*self.grid.ntype)
+        j = int(row - i * self.grid.ntype)
         self.grid.set_inter_coef3(inter, coef, i, j)
       except:
         print(txt_x, txt_y, txt_z, "is not value.")
@@ -438,7 +560,7 @@ class RhocDialog(QtWidgets.QDialog):
     vbox.addWidget(self.table)
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -489,7 +611,7 @@ class ElementDialog(QtWidgets.QDialog):
     hbox.addWidget(self.lined3)
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -538,7 +660,7 @@ class BoundDialog(QtWidgets.QDialog):
     glay.addWidget(self.combo6, 1, 3)
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -590,7 +712,7 @@ class DrawRangeDialog(QtWidgets.QDialog):
     glay.addWidget(self.spinz1, 1, 3)
     self.button = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.button)
-    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.button.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.button.accepted.connect(self.Accept)
     self.button.rejected.connect(self.reject)
 
@@ -643,7 +765,7 @@ class ColorDialog(QtWidgets.QDialog):
     hbox2.addWidget(self.combo2)
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -695,7 +817,7 @@ class SolveDialog(QtWidgets.QDialog):
     hbox1.addWidget(self.button1)    
     self.buttonb = QtWidgets.QDialogButtonBox()
     hbox1.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.Reject)
     self.timer = QtCore.QTimer()
@@ -763,18 +885,18 @@ class DrawDialog(QtWidgets.QDialog):
     self.table = QtWidgets.QTableWidget(glwidget.grid.ntype, 2)
     self.SetTable()
     vbox.addWidget(self.table)
-    self.check1 = QtWidgets.QCheckBox("Display Axis");    
-    vbox.addWidget(self.check1);
+    self.check1 = QtWidgets.QCheckBox("Display Axis")    
+    vbox.addWidget(self.check1)
     self.check1.setChecked(glwidget.axis_disp)
-    self.check2 = QtWidgets.QCheckBox("Display Colormap");    
-    vbox.addWidget(self.check2);
+    self.check2 = QtWidgets.QCheckBox("Display Colormap")    
+    vbox.addWidget(self.check2)
     self.check2.setChecked(glwidget.cmp_disp)
-    self.check3 = QtWidgets.QCheckBox("Display Step");    
-    vbox.addWidget(self.check3);
+    self.check3 = QtWidgets.QCheckBox("Display Step")    
+    vbox.addWidget(self.check3)
     self.check3.setChecked(glwidget.step_disp)   
     self.buttonb = QtWidgets.QDialogButtonBox()
     vbox.addWidget(self.buttonb)
-    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+    self.buttonb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
     self.buttonb.accepted.connect(self.Accept)
     self.buttonb.rejected.connect(self.reject)
 
@@ -849,9 +971,9 @@ class ProfileDialog(QtWidgets.QDialog):
     hbox1 = QtWidgets.QHBoxLayout()
     vbox.addLayout(hbox1)
     spin1_text = ['Y : ', 'X : ', 'X : ']
-    spin1_max = [grid.size[1]-1, grid.size[0]-1, grid.size[0]-1]    
+    spin1_max = [grid.size[1] - 1, grid.size[0] - 1, grid.size[0] - 1]    
     spin2_text = ['Z : ', 'Z : ', 'Y : ']
-    spin2_max = [grid.size[2]-1, grid.size[2]-1, grid.size[1]-1]
+    spin2_max = [grid.size[2] - 1, grid.size[2] - 1, grid.size[1] - 1]
     self.spin1 = self.SpinBox(spin1_max[di])
     self.spin1.setPrefix(spin1_text[di])
     self.spin1.valueChanged[int].connect(self.SpinChanged)
@@ -885,6 +1007,31 @@ class ProfileDialog(QtWidgets.QDialog):
     if fname:
       self.canvas.saveGraph(str(fname)) 
 
+
+"""
+Overall Coef
+""" 
+class OverallCoefDialog(QtWidgets.QDialog):
+  def __init__(self, parent, cx, cy, cz):
+    QtWidgets.QDialog.__init__(self, parent)
+    self.setWindowTitle("Overall Coef")
+    vbox = QtWidgets.QVBoxLayout(self)
+    linedx = self.LineEdit('X', cx)
+    vbox.addWidget(linedx)
+    linedy = self.LineEdit('Y', cy)
+    vbox.addWidget(linedy)
+    linedz = self.LineEdit('Z', cz)
+    vbox.addWidget(linedz)
+    button = QtWidgets.QPushButton("Close")
+    button.clicked.connect(self.close)
+    vbox.addWidget(button)
+
+  def LineEdit(self, label, val):
+    lined = QtWidgets.QLineEdit()
+    lined.setText('{} : {}'.format(label, val))
+    lined.setReadOnly(True)
+    return lined
+
 """
 MainWindow
 """    
@@ -902,7 +1049,8 @@ class MainWindow(QtWidgets.QMainWindow):
     menubar = QtWidgets.QMenuBar(self)
     self.setMenuBar(menubar)
     file_menu = QtWidgets.QMenu('File', self)
-    file_menu.addAction('New', self.fileNew)   
+    file_menu.addAction('New', self.fileNew)
+    file_menu.addAction('New from Image', self.fileFromImage)   
     file_menu.addAction('Open', self.fileOpen)
     file_menu.addAction('Save', self.fileSave)
     file_menu.addAction('Save Image', self.fileSaveImage)
@@ -933,8 +1081,9 @@ class MainWindow(QtWidgets.QMainWindow):
     cyl_menu.addAction('Update', self.cylDialog)
     cyl_menu.addAction('Val', self.cylDialog)
     grid_menu.addMenu(cyl_menu)
-    grid_menu.addAction('Ref Local Coef',  self.refLocalCoef)
+    grid_menu.addAction('Ref Local Coef', self.refLocalCoef)
     grid_menu.addAction('Solve', self.solveDialog)
+    grid_menu.addAction('Overall Coef', self.overallCoef)
     menubar.addMenu(grid_menu)
     ana_menu = QtWidgets.QMenu('Analysis', self)
     pro_menu = QtWidgets.QMenu('Profile', self)
@@ -945,8 +1094,18 @@ class MainWindow(QtWidgets.QMainWindow):
     menubar.addMenu(ana_menu)
 
   def fileNew(self):
-    self.glwidget.grid = NewGridDialog.newGrid(self)
-    if self.glwidget.grid:
+    dlg = NewGridDialog(self)
+    if dlg.exec_():
+      self.glwidget.grid = dlg.newGrid()
+      region = self.glwidget.draw.region(self.glwidget.grid)
+      self.glwidget.model = MPGLGrid.model((0,0,1,0,1,0), region)
+      self.glwidget.cmp.range = (0.0, 0.0)
+      self.glwidget.updateGL()
+
+  def fileFromImage(self):
+    dlg = FromImageDialog(self)
+    if dlg.exec_():
+      self.glwidget.grid = dlg.newGrid()
       region = self.glwidget.draw.region(self.glwidget.grid)
       self.glwidget.model = MPGLGrid.model((0,0,1,0,1,0), region)
       self.glwidget.cmp.range = (0.0, 0.0)
@@ -966,7 +1125,7 @@ class MainWindow(QtWidgets.QMainWindow):
       fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save file')[0]
       if fname:
         self.glwidget.grid.write(str(fname), self.compress)
-        
+
   def fileSaveImage(self):
     if self.glwidget.grid:
       fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save image')[0]
@@ -1048,6 +1207,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.glwidget.cmpRange()
         self.glwidget.updateGL()
 
+  def overallCoef(self):
+    if self.glwidget.grid:
+      elm = self.glwidget.grid.element
+      cx = self.glwidget.grid.overall_coef(0, 1.0/elm[0])
+      cy = self.glwidget.grid.overall_coef(1, 1.0/elm[1])
+      cz = self.glwidget.grid.overall_coef(2, 1.0/elm[2])
+      dlg = OverallCoefDialog(self, cx, cy, cz)
+      dlg.exec_()
+
   def profileDialog(self):
     if self.glwidget.grid:
       txt = self.sender().text()
@@ -1099,41 +1267,44 @@ class MainWindow(QtWidgets.QMainWindow):
     self.addToolBar(toolbar)
 
   def setMouseMode(self, pressed):
-    txt = self.sender().text()
-    if txt == "Rot":
+    if self.glwidget.model:
+      txt = self.sender().text()
+      if txt == "Rot":
         self.glwidget.model.button_mode = 0
-    elif txt == "Trans":
+      elif txt == "Trans":
         self.glwidget.model.button_mode = 1 
-    elif txt == "Zoom":
+      elif txt == "Zoom":
         self.glwidget.model.button_mode = 2
 
   def setDrawKind(self, pressed):
     txt = self.sender().text()
     if txt == "Type":
-        self.glwidget.draw.kind = 0
+      self.glwidget.draw.kind = 0
     elif txt == "Update":
-        self.glwidget.draw.kind = 1 
+      self.glwidget.draw.kind = 1 
     elif txt == "Val":
-        self.glwidget.draw.kind = 2
-        self.glwidget.cmpRange()
+      self.glwidget.draw.kind = 2
+      self.glwidget.cmpRange()
     elif txt == "Cx":
-        self.glwidget.draw.kind = 3
-        self.glwidget.cmpRange()
+      self.glwidget.draw.kind = 3
+      self.glwidget.cmpRange()
     elif txt == "Cy":
-        self.glwidget.draw.kind = 4
-        self.glwidget.cmpRange()
+      self.glwidget.draw.kind = 4
+      self.glwidget.cmpRange()
     elif txt == "Cz":
-        self.glwidget.draw.kind = 5
-        self.glwidget.cmpRange()
+      self.glwidget.draw.kind = 5
+      self.glwidget.cmpRange()
     self.glwidget.updateGL()
 
   def resetModel(self):
-    self.glwidget.model.reset()
-    self.glwidget.updateGL()
+    if self.glwidget.model:
+      self.glwidget.model.reset()
+      self.glwidget.updateGL()
 
   def fitModel(self):
-    self.glwidget.model.fit()
-    self.glwidget.updateGL()
+    if self.glwidget.model:
+      self.glwidget.model.fit()
+      self.glwidget.updateGL()
 
 class ToolButton(QtWidgets.QToolButton):
   def __init__(self, text, func):

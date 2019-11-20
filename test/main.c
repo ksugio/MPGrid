@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	//GridAl10C(&data);
 	GridAl10CTrans(&data);
 	//Solve(&data);
-	SolveCL(&data);
+	//SolveCL(&data);
 	fprintf(stderr, "overall_coef_x %e\n", MP_GridOverallCoef(&data, 0, 1.0e7));
 	fprintf(stderr, "overall_coef_y %e\n", MP_GridOverallCoef(&data, 1, 1.0e7));
 	fprintf(stderr, "overall_coef_z %e\n", MP_GridOverallCoef(&data, 2, 1.0e7));
