@@ -4,7 +4,7 @@ import MPGrid
 import time
 
 if __name__ == "__main__":
-    starttime = time.clock()
+    starttime = time.process_time()
     dt = 1.0e-12
     fnamef = 'alsic_f.mpgrid'
     nx = 110
@@ -32,7 +32,6 @@ if __name__ == "__main__":
     g.fill_update(0, (nx-1, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(300, (0, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(vlr+300, (0, 0, 0), (0, ny-1, nz-1))
-    g.write('alsic.mpgrid')
     while 1:
         dv = g.solve(dt, 10000)
         v12 = g.ave_val((1, 0, 0), (1, ny-1, nz-1)) - g.ave_val((2, 0, 0), (2, ny-1, nz-1))
@@ -42,6 +41,6 @@ if __name__ == "__main__":
             break
     g.write(fnamef, 8)
     print('overall_coef', g.overall_coef(0, 1.0e7))
-    endtime = time.clock()
+    endtime = time.process_time()
     print('----- Execution time =', endtime-starttime, '-----')
 

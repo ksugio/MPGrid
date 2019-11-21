@@ -1116,8 +1116,6 @@ PyMODINIT_FUNC PyInit_MPGrid(void)
 	PyModule_AddObject(m, "copy", (PyObject *)&PyGridCopyType);
 	Py_INCREF(&PyGridCloneType);
 	PyModule_AddObject(m, "clone", (PyObject *)&PyGridCloneType);
-	PyModule_AddIntConstant(m, "True", TRUE);
-	PyModule_AddIntConstant(m, "False", FALSE);
 	PyModule_AddIntConstant(m, "BoundInsulate", MP_GridBoundInsulate);
 	PyModule_AddIntConstant(m, "BoundPeriodic", MP_GridBoundPeriodic);
 	PyModule_AddIntConstant(m, "InterCond", MP_GridInterCond);

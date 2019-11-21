@@ -303,6 +303,7 @@ class ImageScene(QtWidgets.QGraphicsScene):
     self.pixmap = QtGui.QPixmap.fromImage(qimg)
     self.clear()
     self.addPixmap(self.pixmap)
+    self.setSceneRect(0, 0, width, height)
 
   def mousePressEvent(self, event):
     if event.button() == QtCore.Qt.LeftButton:
@@ -318,24 +319,30 @@ class FromImageDialog(QtWidgets.QDialog):
     self.setWindowTitle("From Image")
     self.colors = []
     self.cvimg = None
+    self.insitu = True
     hbox = QtWidgets.QHBoxLayout(self)
     vbox = QtWidgets.QVBoxLayout()
     hbox.addLayout(vbox)
     button0 = QtWidgets.QPushButton('Load Image')
     button0.clicked[bool].connect(self.loadImage)
     vbox.addWidget(button0)
+    hbox0 = QtWidgets.QHBoxLayout()
+    vbox.addLayout(hbox0)
+    self.spinw = self.SpinBox(120, 'W : ')
+    self.spinw.valueChanged.connect(self.changeWidth)
+    hbox0.addWidget(self.spinw)
+    self.spinh = self.SpinBox(120, 'H : ')
+    self.spinh.valueChanged.connect(self.changeHeight)
+    hbox0.addWidget(self.spinh)
     self.list = QtWidgets.QListWidget()
     vbox.addWidget(self.list)
     hbox1 = QtWidgets.QHBoxLayout()
     vbox.addLayout(hbox1)
-    self.spinr = self.SpinBox()
-    self.spinr.setPrefix('R : ')
+    self.spinr = self.SpinBox(80, 'R : ')
     hbox1.addWidget(self.spinr)
-    self.sping = self.SpinBox()
-    self.sping.setPrefix('G : ')
+    self.sping = self.SpinBox(80, 'G : ')
     hbox1.addWidget(self.sping)
-    self.spinb = self.SpinBox()
-    self.spinb.setPrefix('B : ')
+    self.spinb = self.SpinBox(80, 'B : ')
     hbox1.addWidget(self.spinb)
     hbox2 = QtWidgets.QHBoxLayout()
     vbox.addLayout(hbox2)
@@ -357,11 +364,12 @@ class FromImageDialog(QtWidgets.QDialog):
     view.setScene(self.scene)
     hbox.addWidget(view)
 
-  def SpinBox(self):
+  def SpinBox(self, maxw, prefix):
     spin = QtWidgets.QSpinBox()
     spin.setMinimum(0)
     spin.setMaximum(255)
-    spin.setMaximumWidth(100)
+    spin.setMaximumWidth(maxw)
+    spin.setPrefix(prefix)
     return spin    
 
   def loadImage(self):
@@ -369,6 +377,36 @@ class FromImageDialog(QtWidgets.QDialog):
      if fname:
        self.cvimg = cv2.imread(fname)
        self.scene.setImage(self.cvimg)
+       self.insitu = False
+       self.spinw.setMaximum(self.cvimg.shape[1])
+       self.spinw.setValue(self.cvimg.shape[1])
+       self.spinh.setMaximum(self.cvimg.shape[0])
+       self.spinh.setValue(self.cvimg.shape[0])
+       self.insitu = True
+
+  def changeWidth(self):
+    if self.insitu:
+       height, width, dim = self.cvimg.shape
+       nwidth = int(self.spinw.value())
+       nheight = int(nwidth * height / width)
+       self.insitu = False
+       self.spinh.setValue(nheight)
+       self.insitu = True
+       if nwidth > 1 and nheight > 1:
+         img = cv2.resize(self.cvimg, (nwidth, nheight))
+         self.scene.setImage(img)
+
+  def changeHeight(self):
+    if self.insitu:
+      height, width, dim = self.cvimg.shape
+      nheight = int(self.spinh.value())
+      nwidth = int(nheight * width / height)
+      self.insitu = False
+      self.spinw.setValue(nwidth)
+      self.insitu = True
+      if nwidth > 1 and nheight > 1:
+         img = cv2.resize(self.cvimg, (nwidth, nheight))
+         self.scene.setImage(img)
 
   def pickColor(self, r, g, b):
     self.spinr.setValue(r)
@@ -396,7 +434,8 @@ class FromImageDialog(QtWidgets.QDialog):
   def newGrid(self):
     if self.cvimg is not None:
       img0 = cv2.cvtColor(self.cvimg, cv2.COLOR_BGR2RGB)
-      img = cv2.flip(img0, 0)
+      img1 = cv2.resize(img0, (self.spinw.value(), self.spinh.value()))
+      img = cv2.flip(img1, 0)
       nx = img.shape[1]
       ny = img.shape[0]
       ntype = len(self.colors)+1

@@ -19,7 +19,7 @@ def AlSiCTran(nx, ny, nz, elm, vlr, local_coef):
     g.fill_update(0, (nx-1, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(300, (0, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(vlr+300, (0, 0, 0), (0, ny-1, nz-1))
-    if local_coef == MPGrid.False:
+    if local_coef == False:
         g.set_inter_coef1(MPGrid.InterCond, lam_al, 0, 0)
         g.set_inter_coef1(MPGrid.InterTrans, h_al_sic, 0, 1)
         g.set_inter_coef1(MPGrid.InterTrans, h_al_sic, 1, 0)
@@ -34,33 +34,33 @@ def AlSiCTran(nx, ny, nz, elm, vlr, local_coef):
 if __name__ == "__main__":
     nloop = 10000
     # Normal
-    starttime = time.clock()
-    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, MPGrid.False)
+    starttime = time.process_time()
+    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, False)
     dt = g.estimate_dt()
     dv = g.solve(dt, nloop)
-    endtime = time.clock()
-    print g.step, dv, endtime-starttime
+    endtime = time.process_time()
+    print(g.step, dv, endtime-starttime)
     # Use Local Coef
-    starttime = time.clock()
-    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, MPGrid.True)
+    starttime = time.process_time()
+    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, True)
     dt = g.estimate_dt()
     dv = g.solve(dt, nloop)
-    endtime = time.clock()
-    print g.step, dv, endtime-starttime, "Local Coef"
+    endtime = time.process_time()
+    print(g.step, dv, endtime-starttime, "Local Coef")
     # Use OpenCL
-    starttime = time.clock()
-    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, MPGrid.False)
+    starttime = time.process_time()
+    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, False)
     k = MPCLGrid.new(g, 0)
     dt = g.estimate_dt()
     dv = k.solve(g, dt, nloop)
-    endtime = time.clock()
-    print g.step, dv, endtime-starttime, "OpenCL"
+    endtime = time.process_time()
+    print(g.step, dv, endtime-starttime, "OpenCL")
     # Use OpenCL and Local Coef
-    starttime = time.clock()
-    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, MPGrid.True)
+    starttime = time.process_time()
+    g = AlSiCTran(100, 100, 1, 1.0e-6, 1.0, True)
     k = MPCLGrid.new(g, 0)
     dt = g.estimate_dt()
     dv = k.solve(g, dt, nloop)
-    endtime = time.clock()
-    print g.step, dv, endtime-starttime, "OpenCL and Local Coef"
+    endtime = time.process_time()
+    print(g.step, dv, endtime-starttime, "OpenCL and Local Coef")
 
