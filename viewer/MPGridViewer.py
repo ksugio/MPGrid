@@ -1,7 +1,4 @@
 import MPGrid
-import time
-
-import MPGrid
 import MPGLGrid
 import sys
 import math
@@ -9,7 +6,7 @@ import numpy as np
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets, QtOpenGL
 from OpenGL import GL
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 """
