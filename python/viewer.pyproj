@@ -3,12 +3,13 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>46da5b7c-366b-4ffc-8aaa-b6ea243a77f4</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>MPGridViewer.py</StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>viewer.py</StartupFile>
     <SearchPath>..\python</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>MPGridViewer</Name>
+    <Name>viewer</Name>
     <RootNamespace>MPGridViewer</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -20,7 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="MPGridViewer.py" />
+    <Compile Include="viewer.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
