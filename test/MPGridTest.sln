@@ -13,6 +13,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPGLGrid", "..\libgl\MPGLGrid.vcxproj", "{50CD3421-6251-436A-8F5A-B87ED44A3365}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPCLGrid", "..\libcl\MPCLGrid.vcxproj", "{638A6755-3C6D-48F6-89EF-BA2EDDDCFCC9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7054A70-DD1A-485C-8F49-5072B6892CAA} = {D7054A70-DD1A-485C-8F49-5072B6892CAA}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

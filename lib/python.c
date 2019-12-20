@@ -103,6 +103,24 @@ static PyMemberDef PyGridMembers[] = {
 	{ NULL }  /* Sentinel */
 };
 
+static PyObject* PyGridElementFlow(MP_GridData* self, PyObject* args, PyObject* kwds)
+{
+	int id;
+	static char* kwlist[] = { "id", NULL };
+	double f[3];
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &id)) {
+		return NULL;
+	}
+	MP_GridElementFlow(self, id, f);
+	return Py_BuildValue("ddd", f[0], f[1], f[2]);
+}
+
+static PyObject* PyGridMeanFlow(MP_GridData* self, PyObject* args)
+{
+	return Py_BuildValue("d", MP_GridMeanFlow(self));
+}
+
 static PyObject *PyGridSolve(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	double dt;
@@ -366,6 +384,19 @@ static PyObject *PyGridFillVal(MP_GridData *self, PyObject *args, PyObject *kwds
 	}
 	count = MP_GridFillVal(self, val, x0, y0, z0, x1, y1, z1);
 	return Py_BuildValue("i", count);
+}
+
+static PyObject* PyGridGradVal(MP_GridData* self, PyObject* args, PyObject* kwds)
+{
+	int dir;
+	double v0, v1;
+	static char* kwlist[] = { "dir", "v0", "v1", NULL };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "idd", kwlist, &dir, &v0, &v1)) {
+		return NULL;
+	}
+	MP_GridGradVal(self, dir, v0, v1);
+	Py_RETURN_NONE;
 }
 
 static PyObject *PyGridEllipsoidVal(MP_GridData *self, PyObject *args, PyObject *kwds)
@@ -642,18 +673,6 @@ static PyObject *PyGridSetLocalCoef3(MP_GridData *self, PyObject *args, PyObject
 	Py_RETURN_NONE;
 }
 
-static PyObject* PyGridOverallCoef(MP_GridData* self, PyObject* args, PyObject* kwds)
-{
-	int dir;
-	double q;
-	static char* kwlist[] = { "dir", "q", NULL };
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "id", kwlist, &dir, &q)) {
-		return NULL;
-	}
-	return Py_BuildValue("d", MP_GridOverallCoef(self, dir, q));
-}
-
 static PyObject *PyGridGetRhoc(MP_GridData *self, PyObject *args, PyObject *kwds)
 {
 	int i;
@@ -760,6 +779,10 @@ static PyObject *PyGridWrite(MP_GridData *self, PyObject *args, PyObject *kwds)
 }
 
 static PyMethodDef PyGridMethods[] = {
+	{ "element_flow", (PyCFunction)PyGridElementFlow, METH_VARARGS | METH_KEYWORDS,
+	"element_fow(id) : return flow of an element" },
+	{ "mean_flow", (PyCFunction)PyGridMeanFlow, METH_NOARGS,
+	"mean_flow() : return mean flow of elements" },
 	{ "solve", (PyCFunction)PyGridSolve, METH_VARARGS | METH_KEYWORDS,
 	"solve(dt, nloop) : solve" },
 	{ "estimate_dt", (PyCFunction)PyGridEstimateDt, METH_VARARGS | METH_KEYWORDS,
@@ -790,6 +813,8 @@ static PyMethodDef PyGridMethods[] = {
 	"set_val(val, (x, y, z)) : set value" },
 	{ "fill_val", (PyCFunction)PyGridFillVal, METH_VARARGS | METH_KEYWORDS,
 	"fill_val(val, (x0, y0, z0), (x1, y1, z1)) : fill value" },
+	{ "grad_val", (PyCFunction)PyGridGradVal, METH_VARARGS | METH_KEYWORDS,
+	"grad_val(val, v0, v1) : fill gradation value" },
 	{ "ellipsoid_val", (PyCFunction)PyGridEllipsoidVal, METH_VARARGS | METH_KEYWORDS,
 	"ellipsoid_val(val, (x0, y0, z0), (x1, y1, z1), [margin=0.33]) : fill value in ellipsoid shape" },
 	{ "cylinder_val", (PyCFunction)PyGridCylinderVal, METH_VARARGS | METH_KEYWORDS,
@@ -824,8 +849,6 @@ static PyMethodDef PyGridMethods[] = {
 	"set_local_coef1(c, type0, type1) : set local coefficient by type" },
 	{ "set_local_coef3", (PyCFunction)PyGridSetLocalCoef3, METH_VARARGS | METH_KEYWORDS,
 	"set_local_coef3((cx, cy, cz), type0, type1) : set local coefficient by type" },
-	{ "overall_coef", (PyCFunction)PyGridOverallCoef, METH_VARARGS | METH_KEYWORDS,
-	"overall_coef(dir, q) : calculate overall coefficient" },
 	{ "get_rhoc", (PyCFunction)PyGridGetRhoc, METH_VARARGS | METH_KEYWORDS,
 	"get_rhoc(i) : get coefficient, rhoc x c" },
 	{ "set_rhoc", (PyCFunction)PyGridSetRhoc, METH_VARARGS | METH_KEYWORDS,

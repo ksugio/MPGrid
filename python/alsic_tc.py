@@ -5,10 +5,10 @@ import time
 
 if __name__ == "__main__":
     starttime = time.process_time()
-    dt = 1.0e-12
+    dt = 2.0e-12
     fnamef = 'alsic_f.mpgrid'
     nx = 110
-    ny = 10
+    ny = 100
     nz = 1
     nl = 5
     nr = 5
@@ -30,17 +30,16 @@ if __name__ == "__main__":
     g.fill_type(1, (45, 0, 0), (65, ny-1, nz-1))
     g.fill_update(0, (0, 0, 0), (0, ny-1, nz-1))
     g.fill_update(0, (nx-1, 0, 0), (nx-1, ny-1, nz-1))
-    g.fill_val(300, (0, 0, 0), (nx-1, ny-1, nz-1))
-    g.fill_val(vlr+300, (0, 0, 0), (0, ny-1, nz-1))
+    g.grad_val(0, vlr+300, 300)
+    print('step dv mean_flow etc')
     while 1:
         dv = g.solve(dt, 10000)
         v12 = g.ave_val((1, 0, 0), (1, ny-1, nz-1)) - g.ave_val((2, 0, 0), (2, ny-1, nz-1))
-        sigma = lam_al*v12*(nx-nl-nr-1)/(vlr-nl*v12-nr*v12)
-        print(g.step, dv, sigma)
+        etc = lam_al*v12*(nx-nl-nr-1)/(vlr-nl*v12-nr*v12)
+        print(g.step, dv, g.mean_flow(), etc)
         if dv < findv:
             break
     g.write(fnamef, 8)
-    print('overall_coef', g.overall_coef(0, 1.0e7))
     endtime = time.process_time()
     print('----- Execution time =', endtime-starttime, '-----')
 

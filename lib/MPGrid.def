@@ -2,6 +2,8 @@ LIBRARY	"MPGrid"
 EXPORTS
 	MP_GridAlloc
 	MP_GridFree
+	MP_GridElementFlow
+	MP_GridMeanFlow
 	MP_GridSolve
 	MP_GridEstimateDt
 	MP_GridSetInter1
@@ -13,10 +15,10 @@ EXPORTS
 	MP_GridRefLocalCoef
 	MP_GridSetLocalCoef1
 	MP_GridSetLocalCoef3
-	MP_GridOverallCoef
 	MP_GridFillType
 	MP_GridFillUpdate
 	MP_GridFillVal
+	MP_GridGradVal
 	MP_GridFillLocalCoef
 	MP_GridEllipsoidType
 	MP_GridEllipsoidUpdate
@@ -32,3 +34,6 @@ EXPORTS
 	MP_GridRead
 	MP_GridCopy
 	MP_GridClone
+	MP_GridCGAlloc
+	MP_GridCGFree
+	MP_GridCGSolve

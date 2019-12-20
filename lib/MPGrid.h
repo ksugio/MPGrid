@@ -40,6 +40,10 @@ extern "C" {
 #include <windows.h>
 #endif
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 /*--------------------------------------------------
 	grid typedef and functions
 */
@@ -73,6 +77,8 @@ typedef struct MP_GridData {
 
 int MP_GridAlloc(MP_GridData *data, int nx, int ny, int nz, int ntype, int local_coef);
 void MP_GridFree(MP_GridData *data);
+void MP_GridElementFlow(MP_GridData* data, int id, double f[]);
+double MP_GridMeanFlow(MP_GridData *data);
 double MP_GridSolve(MP_GridData *data, double dt, int nloop);
 double MP_GridEstimateDt(MP_GridData *data, double ratio);
 int MP_GridSetInter1(MP_GridData *data, int inter, int i, int j);
@@ -84,13 +90,13 @@ int MP_GridSetInterCoef3(MP_GridData *data, int inter[], double coef[], int i, i
 void MP_GridRefLocalCoef(MP_GridData *data);
 void MP_GridSetLocalCoef1(MP_GridData *data, double lcoef, short type0, short type1);
 void MP_GridSetLocalCoef3(MP_GridData *data, double lcoef[], short type0, short type1);
-double MP_GridOverallCoef(MP_GridData *data, int dir, double q);
 int MP_GridFillType(MP_GridData *data, short type,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridFillUpdate(MP_GridData *data, short update,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridFillVal(MP_GridData *data, double val,
 	int x0, int y0, int z0, int x1, int y1, int z1);
+void MP_GridGradVal(MP_GridData* data, int dir, double v0, double v1);
 int MP_GridFillLocalCoef(MP_GridData *data, double cx, double cy, double cz,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridEllipsoidType(MP_GridData *data, short type,
@@ -118,6 +124,22 @@ int MP_GridRead(MP_GridData *data, char *filename, int version);
 int MP_GridCopy(MP_GridData *src, MP_GridData *dst,
 	int x0, int y0, int z0, int x1, int y1, int z1);
 int MP_GridClone(MP_GridData *src, MP_GridData *dst);
+
+/*--------------------------------------------------
+	cg typedef and functions
+*/
+typedef struct MP_GridCG {
+#ifdef MP_PYTHON_LIB
+	PyObject_HEAD
+#endif
+	double *dval;
+	double *g;
+	double *h;
+} MP_GridCG;
+
+int MP_GridCGAlloc(MP_GridCG* cg, MP_GridData* data);
+void MP_GridCGFree(MP_GridCG* cg);
+double MP_GridCGSolve(MP_GridCG* cg, MP_GridData* data, double dt, int nloop);
 
 /*--------------------------------------------------
 	rand functions

@@ -5,10 +5,10 @@ import time
 
 if __name__ == "__main__":
     starttime = time.process_time()
-    dt = 1.0e-12
+    dt = 1.0e-11
     fnamef = 'fe_f.mpgrid'
     nx = 110
-    ny = 10
+    ny = 100
     nz = 1
     nl = 5
     nr = 5
@@ -25,11 +25,12 @@ if __name__ == "__main__":
     g.fill_update(0, (nx-1, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(300, (0, 0, 0), (nx-1, ny-1, nz-1))
     g.fill_val(vlr+300, (0, 0, 0), (0, ny-1, nz-1))
+    print('step dv mean_flow etc')
     while 1:
         dv = g.solve(dt, 10000)
         v12 = g.ave_val((1, 0, 0), (1, ny-1, nz-1)) - g.ave_val((2, 0, 0), (2, ny-1, nz-1))
-        sigma = lam_fe*v12*(nx-nl-nr-1)/(vlr-nl*v12-nr*v12)
-        print(g.step, dv, sigma)
+        etc = lam_fe*v12*(nx-nl-nr-1)/(vlr-nl*v12-nr*v12)
+        print(g.step, dv, g.mean_flow(), etc)
         if dv < findv:
             break
     g.write(fnamef, 8)

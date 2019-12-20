@@ -699,7 +699,7 @@ double MPCL_GridKernelSolve(MPCL_GridKernelData *gkd, MP_GridData *data, double 
 				PrintError("clEnqueueReadBuffer failed", status);
 				return 0.0;
 			}
-			for (i = 0, dvtot = 0.0; i < data->ntot; i++) {
+			for (i = 0; i < data->ntot; i++) {
 				if (data->update[i]) {
 					dvtot += fabs(data->buf[i] - data->val[i]);
 					data->val[i] = data->buf[i];

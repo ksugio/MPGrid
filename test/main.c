@@ -5,15 +5,16 @@ void GlutWindow(MP_GridData* data, int width, int height, int argc, char** argv)
 
 void GridAl(MP_GridData *data)
 {
-	MP_GridAlloc(data, 100, 100, 1, 1, FALSE);
+	MP_GridAlloc(data, 100, 10, 1, 1, FALSE);
 	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 99, 0);
 	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 99, 0);
-	MP_GridFillVal(data, 300.0, 1, 0, 0, 99, 99, 0);
+	MP_GridFillVal(data, 300.0 + 1.0, 1, 0, 0, 99, 99, 0);
 	MP_GridFillVal(data, 300.0 + 10.0, 0, 0, 0, 0, 99, 0);
 	data->element[0] = 1.0e-4;
 	data->element[1] = 1.0e-4;
 	data->element[2] = 1.0e-4;
 	MP_GridSetCoef1(data, 236.0, 0, 0);
+//	MP_GridRefLocalCoef(data);
 	data->rhoc[0] = 2465.1;
 }
 
@@ -24,12 +25,11 @@ void GridAl10C(MP_GridData *data)
 	double lam_c[] = { 1200.0, 1200.0, 1200.0 };
 	double lam_al_c[] = { 394.4289694, 394.4289694, 394.4289694 };
 
-	MP_GridAlloc(data, 100, 10, 20, 2, TRUE);
-	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 9, 19);
-	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 9, 19);
-	MP_GridFillType(data, 1, 44, 0, 0, 54, 9, 19);
-	MP_GridFillVal(data, 300.0, 1, 0, 0, 99, 9, 19);
-	MP_GridFillVal(data, 300.0 + 10.0, 0, 0, 0, 0, 9, 19);
+	MP_GridAlloc(data, 100, 10, 1, 2, TRUE);
+	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 99, 0);
+	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 99, 0);
+	MP_GridFillType(data, 1, 45, 0, 0, 55, 99, 0);
+	MP_GridGradVal(data, 0, 310, 300);
 	data->element[0] = 1.0e-4;
 	data->element[1] = 1.0e-4;
 	data->element[2] = 1.0e-4;
@@ -51,12 +51,11 @@ void GridAl10CTrans(MP_GridData *data)
 	double lam_c[] = { 1200.0, 1200.0, 1200.0 };
 	double h_al_c[] = { 110113846.7, 110113846.7, 110113846.7 };
 
-	MP_GridAlloc(data, 100, 100, 1, 2, FALSE);
+	MP_GridAlloc(data, 100, 10, 1, 2, FALSE);
 	MP_GridFillUpdate(data, 0, 0, 0, 0, 0, 99, 0);
 	MP_GridFillUpdate(data, 0, 99, 0, 0, 99, 99, 0);
-	MP_GridFillType(data, 1, 44, 0, 0, 54, 99, 0);
-	MP_GridFillVal(data, 300.0, 1, 0, 0, 99, 99, 0);
-	MP_GridFillVal(data, 300.0 + 10.0, 0, 0, 0, 0, 99, 0);
+	MP_GridFillType(data, 1, 45, 0, 0, 55, 99, 0);
+	MP_GridGradVal(data, 0, 310, 300);
 	data->element[0] = 1.0e-4;
 	data->element[1] = 1.0e-4;
 	data->element[2] = 1.0e-4;
@@ -92,15 +91,15 @@ void Solve(MP_GridData* data)
 	double dt, findv, dv;
 
 	dt = MP_GridEstimateDt(data, 1.0);
-	findv = 1.0e-12;
-	printf("Start size = %e, dt = %e, findv = %e\n", data->element[0], dt, findv);
+	findv = 1.0e-15;
+	printf("Start size = %e, dt = %e, finmf = %e\n", data->element[0], dt, findv);
 	while (1) {
 		dv = MP_GridSolve(data, dt, 10000);
 		if (isnan(dv)) {
 			printf("NaN appear\n");
 			break;
 		}
-		printf("%d, %e, %e\n", data->step, dv, CalSigma(data));
+		printf("%d, %e, %e, %e\n", data->step, dv, MP_GridMeanFlow(data), CalSigma(data));
 		if (dv < findv) break;
 	}
 }
@@ -113,7 +112,7 @@ void SolveCL(MP_GridData* data)
 	MPCL_GridPlatformInfo();
 	MPCL_GridKernelInit(&gkd, data, 0);
 	dt = MP_GridEstimateDt(data, 1.0);
-	findv = 1.0e-12;
+	findv = 1.0e-15;
 	printf("Start size = %e, dt = %e, findv = %e\n", data->element[0], dt, findv);
 	while (1) {
 		dv = MPCL_GridKernelSolve(&gkd, data, dt, 10000);
@@ -121,24 +120,56 @@ void SolveCL(MP_GridData* data)
 			printf("NaN appear\n");
 			break;
 		}
-		printf("%d, %e, %e\n", data->step, dv, CalSigma(data));
+		printf("%d, %e, %e, %e\n", data->step, dv, MP_GridMeanFlow(data), CalSigma(data));
 		if (dv < findv) break;
 	}
 	MPCL_GridKernelFinal(&gkd);
 }
 
+void SolveCG(MP_GridData* data)
+{
+	MP_GridCG cg;
+	double dt, finmf, mf;
+	int c = 0;
+
+	dt = 1.0e-7;
+	finmf = 1.0e-5;
+	MP_GridCGAlloc(&cg, data);
+	while (1) {
+		mf = MP_GridCGSolve(&cg, data, dt, 100);
+		if (isnan(mf)) {
+			printf("NaN appear\n");
+			break;
+		}
+		printf("%d, %e, %e\n", c++, mf, CalSigma(data));
+		if (mf < finmf) break;
+	}
+	MP_GridCGFree(&cg);
+}
+
 main(int argc, char *argv[])
 {
+	int i;
 	MP_GridData data;
 
+
 	//GridAl(&data);
-	//GridAl10C(&data);
-	GridAl10CTrans(&data);
+	//for (i = 0; i < data.ntot; i++) {
+	//	data.val[i] = 310 - i * 10 / data.ntot;
+	//	fprintf(stderr, "%f\n", data.val[i]);
+	//}
+	GridAl10C(&data);
+	//GridAl10CTrans(&data);
 	//Solve(&data);
 	//SolveCL(&data);
-	fprintf(stderr, "overall_coef_x %e\n", MP_GridOverallCoef(&data, 0, 1.0e7));
-	fprintf(stderr, "overall_coef_y %e\n", MP_GridOverallCoef(&data, 1, 1.0e7));
-	fprintf(stderr, "overall_coef_z %e\n", MP_GridOverallCoef(&data, 2, 1.0e7));
+	SolveCG(&data);
+
+	//for (i = 0; i < data.ntot; i++) {
+	//	fprintf(stderr, "%d %e %f\n", i, MP_GridElementFlow(&data, i), data.val[i]);
+	//}
+	//fprintf(stderr, "overall_coef_x %e\n", MP_GridOverallCoef(&data, 0, 1.0e7));
+	//fprintf(stderr, "overall_coef_y %e\n", MP_GridOverallCoef(&data, 1, 1.0e7));
+	//fprintf(stderr, "overall_coef_z %e\n", MP_GridOverallCoef(&data, 2, 1.0e7));
 	GlutWindow(&data, 800, 600, argc, argv);
 	MP_GridFree(&data);
 }
