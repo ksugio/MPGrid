@@ -1,5 +1,5 @@
-CC = gcc
-CFLAGS = -O2 -fPIC -fopenmp
+CC = icc
+CFLAGS = -openmp -O3 -fPIC 
 INCLUDES = -I../lib
 LIBS = -L../lib -lMPGrid -lz -lm
 
