@@ -22,8 +22,7 @@ else:
            Extension(
                name="MPGrid",
                sources=glob("src/*.c"),
-               define_macros=[('MP_PYTHON_LIB', None),],
-               extra_compile_args=['-fopenmp']
+               define_macros=[('MP_PYTHON_LIB', None),]
            )
        ]
    )
