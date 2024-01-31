@@ -1,0 +1,4 @@
+include src/*.h
+include zlib/include/*.h
+include zlib/lib/x64/zlibstat.lib
+include zlib/lib/x86/zlibstat.lib
