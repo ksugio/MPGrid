@@ -1,12 +1,8 @@
 from . import MPGrid
-import sysconfig
 import os
 
 def get_include():
-    vars = sysconfig.get_config_vars()
-    if 'platbase' in vars:
-        return os.path.join(vars['platbase'],
-                            'Lib', 'site-packages', 'MPGrid', 'include')
+    return os.path.join(os.path.dirname(__file__), 'include')
 
 class new(MPGrid.new):
     pass
