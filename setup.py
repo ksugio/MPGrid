@@ -23,7 +23,8 @@ else:
            Extension(
                name="MPGrid.MPGrid",
                sources=glob("lib/*.c"),
-               define_macros=[('MP_PYTHON_LIB', None),]
+               define_macros=[('MP_PYTHON_LIB', None),],
+               libraries=['z']
            )
        ]
    )
